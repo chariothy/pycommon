@@ -88,9 +88,29 @@ def send_email(from_addr, to_addrs, subject: str, body: str, smtp_config: dict, 
 
 
 class AppTool(object):
-    def __init__(self, app_name: str, app_path: str):
+    _instance = None
+    def __new__(cls, *args, **kw):
+        if cls._instance is None:
+            cls._instance = object.__new__(cls, *args, **kw)
+        return cls._instance
+
+    def __init__(self, app_name: str, app_path: str, config_dir: str='', log_mail_to=''):
         self.app_name = app_name
         self.app_path = app_path
+        self.config = {}
+        self.logger = None
+
+        self.load_config(config_dir)
+
+        smtp = self.config['smtp']
+        mail = self.config['mail']
+        #TODO: Use schema to validate smtp_config
+        if smtp and mail:
+            if log_mail_to:
+                self.init_logger(smtp, mail['from'], log_mail_to)
+            else:
+                self.init_logger(smtp, mail['from'], mail['to'])
+
 
     def load_config(self, config_dir: str = '') -> dict:
         """Load config locally
@@ -102,6 +122,9 @@ class AppTool(object):
             [dict] -- Merged config dictionary.
         """
         assert(type(config_dir) == str)
+
+        if self.config:
+            return self.config
 
         configs_path = path.join(self.app_path, config_dir)
         sys.path.append(configs_path)
@@ -122,22 +145,28 @@ class AppTool(object):
         
         Keyword Arguments:
             smtp_config {dict} -- SMTP config for SMTPHandler (default: {{}}), Ex.: 
-            {
-                'server': 'smtp.163.com',
-                'port': 25,
-                'user': 'henrytian@163.com',
-                'pwd': '123456'
-            }
+                {
+                    'server': 'smtp.163.com',
+                    'port': 25,
+                    'user': 'henrytian@163.com',
+                    'pwd': '123456'
+                }
+                If is an empty dict, try to read from config.
             from_addr {str|tuple} -- From address, can be email or (name, email).
                 Ex.: ('Henry TIAN', 'henrytian@163.com')
+                If is an empty str, try to read from config.
             to_addrs {str|tuple} -- To address, can be email or list of emails or list of (name, email)
                 Ex.: (('Henry TIAN', 'henrytian@163.com'),)
+                If is an empty str, try to read from config.
         Returns:
             [logger] -- Initialized logger.
         """
         assert(type(smtp_config) == dict)
         assert(type(from_addr) == str or type(from_addr) == tuple)
         assert(type(to_addrs) == str or type(to_addrs) == tuple)
+
+        if self.logger:
+            return self.logger
 
         logs_path = path.join(self.app_path, 'logs')
         if not os.path.exists(logs_path):
@@ -183,3 +212,12 @@ class AppTool(object):
             logger.addHandler(st_handler)
 
         return logger
+
+    def send_email(self, subject: str, body: str, debug: bool=False) -> dict:
+        """A shortcut of global send_email
+        """
+        smtp = self.config['smtp']
+        mail = self.config['mail']
+        #TODO: Use schema to validate smtp_config
+        assert(smtp and mail)
+        send_email(mail['from'], mail['to'], subject, body, smtp, debug)
