@@ -131,7 +131,8 @@ class AppTool(object):
             config_local = __import__('config_local').CONFIG
         else:
             config_local = {}
-        return deep_merge(config, config_local)
+        self.config = deep_merge(config, config_local)
+        return self.config
 
 
     def init_logger(self, smtp_config: dict={}, from_addr='', to_addrs='') -> logging.Logger:
@@ -214,4 +215,4 @@ class AppTool(object):
         mail = self.config['mail']
         #TODO: Use schema to validate smtp_config
         assert(smtp and mail)
-        send_email(mail['from'], mail['to'], subject, body, smtp, debug)
+        return send_email(mail['from'], mail['to'], subject, body, smtp, debug)
