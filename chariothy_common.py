@@ -88,12 +88,6 @@ def send_email(from_addr, to_addrs, subject: str, body: str, smtp_config: dict, 
 
 
 class AppTool(object):
-    _instance = None
-    def __new__(cls, *args, **kw):
-        if cls._instance is None:
-            cls._instance = object.__new__(cls, *args, **kw)
-        return cls._instance
-
     def __init__(self, app_name: str, app_path: str, config_dir: str='', log_mail_to=''):
         self.app_name = app_name
         self.app_path = app_path
