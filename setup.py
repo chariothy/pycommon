@@ -12,7 +12,7 @@ PY_MODULES = ['chariothy_common']
 URL = 'https://github.com/chariothy/pycommon.git'
 EMAIL = 'chariothy@gmail.com'
 AUTHOR = 'Henry TIAN'
-VERSION = '0.1.8'
+VERSION = '0.1.9'
 
 LONG_DESCRIPTION = '''
 This is a helper which includes common methods and classes used by myself.

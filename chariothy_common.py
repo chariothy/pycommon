@@ -45,21 +45,22 @@ def send_email(from_addr, to_addrs, subject: str, body: str, smtp_config: dict, 
     Returns:
         dict -- Email sending errors. {} if success, else {receiver: message}.
     """
-    assert(type(from_addr) == str or isinstance(from_addr, Iterable))
-    assert(type(to_addrs) == str or isinstance(to_addrs, Iterable))
+    assert(type(from_addr) in (str, tuple, list))
+    assert(type(to_addrs) in (str, tuple, list))
     assert(type(subject) == str)
     assert(type(body) == str)
     assert(type(smtp_config) == dict)
 
     #TODO: Use schema to validate smtp_config
     smtp = smtp_config
-    if isinstance(from_addr, Iterable):
+
+    if type(from_addr) in (tuple, list):
         assert(len(from_addr) == 2)
         from_addr = formataddr(from_addr)
 
-    if isinstance(to_addrs, Iterable):
+    if type(to_addrs) in (tuple, list):
         assert(len(to_addrs) > 0)
-        if isinstance(to_addrs[0], Iterable):
+        if type(to_addrs[0]) in (tuple, list):
             #All (name, tuple)
             to_addrs = [formataddr(addr) for addr in to_addrs]
             to_addr_str = ','.join(to_addrs)
@@ -157,8 +158,8 @@ class AppTool(object):
             [logger] -- Initialized logger.
         """
         assert(type(smtp_config) == dict)
-        assert(type(from_addr) == str or isinstance(from_addr, Iterable))
-        assert(type(to_addrs) == str or isinstance(to_addrs, Iterable))
+        assert(type(from_addr) in (str, tuple, list))
+        assert(type(to_addrs) in (str, tuple, list))
 
         if self.logger:
             return self.logger
@@ -181,13 +182,13 @@ class AppTool(object):
         if smtp_config:
             #TODO: Use schema to validate smtp_config
             smtp = smtp_config
-            if isinstance(from_addr, Iterable):
+            if type(from_addr) in (tuple, list):
                 assert(len(from_addr) == 2)
                 from_addr = formataddr(from_addr)
 
-            if isinstance(to_addrs, Iterable):
+            if type(to_addrs) in (tuple, list):
                 assert(len(to_addrs) > 0)
-                if isinstance(to_addrs[0], Iterable):
+                if type(to_addrs[0]) in (tuple, list):
                     #All (name, tuple)
                     to_addrs = [formataddr(addr) for addr in to_addrs]
 
