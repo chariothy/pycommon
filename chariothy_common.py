@@ -206,7 +206,7 @@ class AppTool(object):
             st_handler.level = logging.DEBUG
             st_handler.setFormatter(logging.Formatter("%(message)s"))
             logger.addHandler(st_handler)
-
+        self.logger = logger
         return logger
 
     def send_email(self, subject: str, body: str, debug: bool=False) -> dict:
