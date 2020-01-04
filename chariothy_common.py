@@ -157,8 +157,8 @@ class AppTool(object):
             [logger] -- Initialized logger.
         """
         assert(type(smtp_config) == dict)
-        assert(type(from_addr) == str or type(from_addr) == tuple)
-        assert(type(to_addrs) == str or type(to_addrs) == tuple)
+        assert(type(from_addr) == str or isinstance(from_addr, Iterable))
+        assert(type(to_addrs) == str or isinstance(to_addrs, Iterable))
 
         if self.logger:
             return self.logger
