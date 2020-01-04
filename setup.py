@@ -1,0 +1,96 @@
+import io
+import os
+import sys
+from shutil import rmtree
+
+from setuptools import setup, Command
+
+# Package meta-data.
+NAME = 'chariothy-common'
+DESCRIPTION = 'Common code for myself.'
+PY_MODULES = ['chariothy_common']
+URL = 'https://github.com/chariothy/pycommon.git'
+EMAIL = 'chariothy@gmail.com'
+AUTHOR = 'Henry TIAN'
+VERSION = '0.1.2'
+
+LONG_DESCRIPTION = '''
+This is a helper which includes common methods and classes used by myself.
+
+'''
+
+# What packages are required for this module to be executed?
+REQUIRED = []
+
+# The rest you shouldn't have to touch too much :)
+# ------------------------------------------------
+# Except, perhaps the License and Trove Classifiers!
+# If you do change the License, remember to change the Trove Classifier for that!
+
+here = os.path.abspath(os.path.dirname(__file__))
+
+class UploadCommand(Command):
+    """Support setup.py upload."""
+
+    description = 'Build and publish the package.'
+    user_options = []
+
+    @staticmethod
+    def status(s):
+        """Prints things in bold."""
+        print('\033[1m{0}\033[0m'.format(s))
+
+    def initialize_options(self):
+        pass
+
+    def finalize_options(self):
+        pass
+
+    def run(self):
+        try:
+            self.status('Removing previous builds…')
+            rmtree(os.path.join(here, 'dist'))
+        except OSError:
+            pass
+
+        self.status('Building Source and Wheel (universal) distribution…')
+        os.system('{0} setup.py sdist bdist_wheel --universal'.format(sys.executable))
+
+        self.status('Uploading the package to PyPi via Twine…')
+        os.system('twine upload dist/*')
+
+        self.status('Publishing git tags…')
+        os.system('git tag v{0}'.format(VERSION))
+        os.system('git push --tags')
+
+        sys.exit()
+
+
+# Where the magic happens:
+setup(
+    name=NAME,
+    version=VERSION,
+    description=DESCRIPTION,
+    long_description=LONG_DESCRIPTION,
+    author=AUTHOR,
+    author_email=EMAIL,
+    url=URL,
+    python_requires='>=3.6.0',
+    # If your package is a single module, use this instead of 'packages':
+    py_modules=PY_MODULES,
+    install_requires=REQUIRED,
+    include_package_data=True,
+    license='MIT',
+    classifiers=[
+        # Trove classifiers
+        # Full list: https://pypi.python.org/pypi?%3Aaction=list_classifiers
+        'License :: OSI Approved :: MIT License',
+        'Programming Language :: Python',
+        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: Implementation :: CPython',
+    ],
+    # $ setup.py publish support.
+    cmdclass={
+        'upload': UploadCommand,
+    },
+)
