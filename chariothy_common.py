@@ -35,7 +35,7 @@ def send_email(from_addr, to_addrs, subject: str, body: str, smtp_config: dict, 
         body {str} -- Email body
         smtp_config {dict} -- SMTP config for SMTPHandler (default: {{}}), Ex.: 
         {
-            'server': 'smtp.163.com',
+            'host': 'smtp.163.com',
             'port': 25,
             'user': 'henrytian@163.com',
             'pwd': '123456'
@@ -78,7 +78,7 @@ def send_email(from_addr, to_addrs, subject: str, body: str, smtp_config: dict, 
     msg['Subject'] = Header(subject, 'utf-8').encode()
         
     from smtplib import SMTP
-    server = SMTP(smtp['server'], smtp['port'])
+    server = SMTP(smtp['host'], smtp['port'])
     if debug:
         server.set_debuglevel(1)
     server.login(smtp['user'], smtp['pwd'])
@@ -142,7 +142,7 @@ class AppTool(object):
         Keyword Arguments:
             smtp_config {dict} -- SMTP config for SMTPHandler (default: {{}}), Ex.: 
                 {
-                    'server': 'smtp.163.com',
+                    'host': 'smtp.163.com',
                     'port': 25,
                     'user': 'henrytian@163.com',
                     'pwd': '123456'
@@ -193,7 +193,7 @@ class AppTool(object):
                     to_addrs = [formataddr(addr) for addr in to_addrs]
 
             mail_handler = handlers.SMTPHandler(
-                    mailhost = (smtp['server'], smtp['port']),
+                    mailhost = (smtp['host'], smtp['port']),
                     fromaddr = from_addr,
                     toaddrs = to_addrs,
                     subject = f'Runtime error in app {self.app_name}',
