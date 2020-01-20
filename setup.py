@@ -12,7 +12,7 @@ PY_MODULES = ['chariothy_common']
 URL = 'https://github.com/chariothy/pycommon.git'
 EMAIL = 'chariothy@gmail.com'
 AUTHOR = 'Henry TIAN'
-VERSION = '0.1.11'
+VERSION = '0.1.12'
 
 LONG_DESCRIPTION = '''
 This is a helper which includes common methods and classes used by myself.
@@ -71,7 +71,8 @@ setup(
     name=NAME,
     version=VERSION,
     description=DESCRIPTION,
-    long_description=LONG_DESCRIPTION,
+    long_description=open('README.md').read(),
+    long_description_content_type="text/markdown",
     author=AUTHOR,
     author_email=EMAIL,
     url=URL,
