@@ -133,6 +133,13 @@ class AppTool(object):
         else:
             config_local = {}
         self.config = deep_merge(config, config_local)
+        
+        if path.exists(path.join(configs_path, 'config_test.py')):
+            config_test = __import__('config_test').CONFIG
+        else:
+            config_test = {}
+        self.config = deep_merge(config, config_test)
+        
         return self.config
 
 
@@ -209,11 +216,12 @@ class AppTool(object):
         self.logger = logger
         return logger
 
-    def send_email(self, subject: str, body: str, debug: bool=False) -> dict:
+    def send_email(self, subject: str, body: str, to_addrs=None, debug: bool=False) -> dict:
         """A shortcut of global send_email
         """
         smtp = self.config['smtp']
         mail = self.config['mail']
         #TODO: Use schema to validate smtp_config
         assert(smtp and mail)
-        return send_email(mail['from'], mail['to'], subject, body, smtp, debug)
+        mail_to = to_addrs if to_addrs else mail['to']
+        return send_email(mail['from'], mail_to, subject, body, smtp, debug)
