@@ -134,7 +134,7 @@ class AppTool(object):
             config_local = {}
         self.config = deep_merge(config, config_local)
         
-        if path.exists(path.join(configs_path, 'config_test.py')):
+        if '--test' in sys.argv and path.exists(path.join(configs_path, 'config_test.py')):
             config_test = __import__('config_test').CONFIG
         else:
             config_test = {}
