@@ -88,6 +88,11 @@ def send_email(from_addr, to_addrs, subject: str, body: str, smtp_config: dict, 
     return result
 
 
+class TitledSMTPHandler(logging.handlers.SMTPHandler):
+    def getSubject(self, record):
+        formatter = logging.Formatter(fmt=self.subject)
+        return formatter.format(record)
+
 class AppTool(object):
     def __init__(self, app_name: str, app_path: str, config_dir: str='', log_mail_to=''):
         self.app_name = app_name
@@ -199,11 +204,11 @@ class AppTool(object):
                     #All (name, tuple)
                     to_addrs = [formataddr(addr) for addr in to_addrs]
 
-            mail_handler = handlers.SMTPHandler(
+            mail_handler = TitledSMTPHandler(
                     mailhost = (smtp['host'], smtp['port']),
                     fromaddr = from_addr,
                     toaddrs = to_addrs,
-                    subject = f'Runtime error in app {self.app_name}',
+                    subject = '%(name)s - %(levelname)s - %(message)s',
                     credentials = (smtp['user'], smtp['pwd']))
             mail_handler.setLevel(logging.ERROR)
             logger.addHandler(mail_handler)
