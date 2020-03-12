@@ -89,10 +89,16 @@ def send_email(from_addr, to_addrs, subject: str, body: str, smtp_config: dict, 
     return result
 
 
-class TitledSMTPHandler(handlers.SMTPHandler):
+class MySMTPHandler(handlers.SMTPHandler):
     def getSubject(self, record):
+        #all_formatter = logging.Formatter(fmt='%(name)s - %(levelno)s - %(levelname)s - %(pathname)s - %(filename)s - %(module)s - %(lineno)d - %(funcName)s - %(created)f - %(asctime)s - %(msecs)d  %(relativeCreated)d - %(thread)d -  %(threadName)s -  %(process)d - %(message)s ')        
+        #print('Ex. >>> ',all_formatter.formatMessage(record))
+
+        #help(record)
+        #help(formatter)
+        
         formatter = logging.Formatter(fmt=self.subject)
-        return formatter.format(record)
+        return formatter.formatMessage(record)
 
 class AppTool(object):
     def __init__(self, app_name: str, app_path: str, config_dir: str='', log_mail_to=''):
@@ -174,7 +180,7 @@ class AppTool(object):
         assert(type(from_addr) in (str, tuple, list))
         assert(type(to_addrs) in (str, tuple, list))
 
-        if self.logger:
+        if self.logger and not smtp_config:
             return self.logger
 
         logs_path = path.join(self.app_path, 'logs')
@@ -203,11 +209,11 @@ class AppTool(object):
                     #All (name, tuple)
                     to_addrs = [formataddr(addr) for addr in to_addrs]
 
-            mail_handler = TitledSMTPHandler(
+            mail_handler = MySMTPHandler(
                     mailhost = (smtp['host'], smtp['port']),
                     fromaddr = from_addr,
                     toaddrs = to_addrs,
-                    subject = '%(name)s - %(levelname)s - %(message)s',
+                    subject = '[%(levelname)s] - %(name)s - %(message)s',
                     credentials = (smtp['user'], smtp['pwd']))
             mail_handler.setLevel(logging.ERROR)
             logger.addHandler(mail_handler)
