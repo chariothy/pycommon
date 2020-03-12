@@ -2,6 +2,7 @@ import os, sys, logging
 from os import path
 from email.utils import formataddr
 from collections.abc import Iterable
+from logging import handlers
 
 
 def deep_merge(dict1: dict, dict2: dict) -> dict:
@@ -88,7 +89,7 @@ def send_email(from_addr, to_addrs, subject: str, body: str, smtp_config: dict, 
     return result
 
 
-class TitledSMTPHandler(logging.handlers.SMTPHandler):
+class TitledSMTPHandler(handlers.SMTPHandler):
     def getSubject(self, record):
         formatter = logging.Formatter(fmt=self.subject)
         return formatter.format(record)
@@ -182,8 +183,6 @@ class AppTool(object):
 
         logger = logging.getLogger(self.app_name)
         logger.setLevel(logging.DEBUG)
-
-        from logging import handlers
 
         rf_handler = handlers.TimedRotatingFileHandler(path.join(logs_path, f'{self.app_name}.log'), when='D', interval=1, backupCount=7)
         rf_handler.suffix = "%Y-%m-%d_%H-%M-%S.log"
