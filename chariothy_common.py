@@ -89,6 +89,34 @@ def send_email(from_addr, to_addrs, subject: str, body: str, smtp_config: dict, 
     return result
 
 
+def alignment(s, space, align='left'):
+    """中英文混排对齐
+    中英文混排时对齐是比较麻烦的，一个先决条件是必须是等宽字体，每个汉字占2个英文字符的位置。
+    用print的格式输出是无法完成的。
+    另一个途径就是用字符串的方法ljust, rjust, center先填充空格。但这些方法是以len()为基准的，即1个英文字符长度为1，1个汉字字符长度为3(uft-8编码），无法满足我们的要求。
+    本方法的核心是利用字符的gb2312编码，正好长度汉字是2，英文是1。
+    
+    Arguments:
+        s {str} -- 原字符串
+        space {int} -- 填充长度
+    
+    Keyword Arguments:
+        align {str} -- 对齐方式 (default: {'left'})
+    
+    Returns:
+        str -- 对齐后的字符串
+    """
+    length = len(s.encode('gb2312', errors='ignore'))
+    space = space - length if space >= length else 0
+    if align == 'left':
+        s1 = s + ' ' * space
+    elif align == 'right':
+        s1 = ' ' * space + s
+    elif align == 'center':
+        s1 = ' ' * (space // 2) + s + ' ' * (space - space // 2)
+    return s1
+
+
 class MySMTPHandler(handlers.SMTPHandler):
     def getSubject(self, record):
         #all_formatter = logging.Formatter(fmt='%(name)s - %(levelno)s - %(levelname)s - %(pathname)s - %(filename)s - %(module)s - %(lineno)d - %(funcName)s - %(created)f - %(asctime)s - %(msecs)d  %(relativeCreated)d - %(thread)d -  %(threadName)s -  %(process)d - %(message)s ')        
