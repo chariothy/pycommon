@@ -263,3 +263,39 @@ class AppTool(object):
         assert(smtp and mail)
         mail_to = to_addrs if to_addrs else mail['to']
         return send_email(mail['from'], mail_to, subject, body, smtp, debug)
+
+
+    def log(self, funcOrParam=False):
+        """Decorator
+        
+        Keyword Arguments:
+            funcOrParam {bool} -- If use parameter, it means re-raise exception or not (default: {False})
+        
+        Raises:
+            ex: Original exception
+        
+        """
+        if isinstance(funcOrParam, bool):
+            reRaiseException = funcOrParam
+            def decorator(func):
+                @functools.wraps(func)
+                def wrapper(*args, **kw):
+                    try:
+                        return func(*args, **kw)
+                    except Exception as ex:
+                        logger.exception(ex)
+                        if reRaiseException:
+                            raise ex
+                return wrapper
+            return decorator
+        else:
+            reRaiseException = False
+            @functools.wraps(funcOrParam)
+            def wrapper(*args,**kw):         
+                try:
+                    return funcOrParam(*args, **kw)
+                except Exception as ex:
+                    logger.exception(ex)
+                    if reRaiseException:
+                        raise ex
+            return wrapper
