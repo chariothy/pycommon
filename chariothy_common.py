@@ -105,6 +105,9 @@ def alignment(s, space, align='left'):
     
     Returns:
         str -- 对齐后的字符串
+
+    Example:
+        alignment('My 姓名', ' ', 'right')
     """
     length = len(s.encode('gb2312', errors='ignore'))
     space = space - length if space >= length else 0
@@ -274,6 +277,10 @@ class AppTool(object):
         Raises:
             ex: Original exception
         
+        Example:
+            @log
+            def func():
+                pass
         """
         if isinstance(funcOrParam, bool):
             reRaiseException = funcOrParam
