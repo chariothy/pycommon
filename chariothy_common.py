@@ -3,6 +3,7 @@ from os import path
 from email.utils import formataddr
 from collections.abc import Iterable
 from logging import handlers
+import functools
 
 
 def deep_merge(dict1: dict, dict2: dict) -> dict:
