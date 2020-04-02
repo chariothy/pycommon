@@ -250,7 +250,7 @@ class AppTool(object):
             mail_handler.setLevel(logging.ERROR)
             logger.addHandler(mail_handler)
 
-        if not ('-b' in sys.argv or '--background' in sys.argv):
+        if not ('--bg' in sys.argv or '--background' in sys.argv):
             st_handler = logging.StreamHandler()
             st_handler.level = logging.DEBUG
             st_handler.setFormatter(logging.Formatter("%(message)s"))
