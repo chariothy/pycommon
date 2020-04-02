@@ -121,6 +121,20 @@ def alignment(s, space, align='left'):
     return s1
 
 
+def get_win_folder(name):
+    """Get windows folder path
+    
+    Arguments:
+        name {str} -- Name of folder path. Ex. Personal, Ex. Desktop
+    """
+    import winreg
+    key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r'Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders')
+    try:
+        return winreg.QueryValueEx(key, name)[0]
+    except FileNotFoundError:
+        return None
+
+
 class MySMTPHandler(handlers.SMTPHandler):
     def getSubject(self, record):
         #all_formatter = logging.Formatter(fmt='%(name)s - %(levelno)s - %(levelname)s - %(pathname)s - %(filename)s - %(module)s - %(lineno)d - %(funcName)s - %(created)f - %(asctime)s - %(msecs)d  %(relativeCreated)d - %(thread)d -  %(threadName)s -  %(process)d - %(message)s ')        
