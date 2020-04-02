@@ -123,9 +123,12 @@ def alignment(s, space, align='left'):
 
 def get_win_folder(name):
     """Get windows folder path
+       Read from \HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders
     
     Arguments:
-        name {str} -- Name of folder path. Ex. Personal, Ex. Desktop
+        name {str} -- Name of folder path. 
+        Ex. AppData, Favorites, Font, History, Local AppData, My Music, SendTo, Start Menu, Startup
+            My Pictures, My Video, NetHood, PrintHood, Programs, Recent Personal, Desktop, Templates
     """
     import winreg
     key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r'Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders')
