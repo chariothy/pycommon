@@ -286,41 +286,37 @@ class AppTool(object):
         return send_email(mail['from'], mail_to, subject, body, smtp, debug)
 
 
-    def log(self, funcOrParam=False):
+    def log(self, reRaise=False, message=''):
         """Decorator
         
         Keyword Arguments:
-            funcOrParam {bool} -- If use parameter, it means re-raise exception or not (default: {False})
+            reRaise {bool} -- Re-raise exception (default: {False})
+            message {str} -- Specify message
         
         Raises:
             ex: Original exception
         
         Example:
-            @log
+            @log()
+            def func():
+                pass
+
+            @log(True)
+            def func():
+                pass
+
+            @log(message='foo')
             def func():
                 pass
         """
-        if isinstance(funcOrParam, bool):
-            reRaiseException = funcOrParam
-            def decorator(func):
-                @functools.wraps(func)
-                def wrapper(*args, **kw):
-                    try:
-                        return func(*args, **kw)
-                    except Exception as ex:
-                        self.logger.exception(ex)
-                        if reRaiseException:
-                            raise ex
-                return wrapper
-            return decorator
-        else:
-            reRaiseException = False
-            @functools.wraps(funcOrParam)
-            def wrapper(*args,**kw):         
+        def decorator(func):
+            @functools.wraps(func)
+            def wrapper(*args, **kw):
                 try:
-                    return funcOrParam(*args, **kw)
+                    return func(*args, **kw)
                 except Exception as ex:
-                    self.logger.exception(ex)
-                    if reRaiseException:
+                    self.logger.exception(message if message else str(ex))
+                    if reRaise:
                         raise ex
             return wrapper
+        return decorator
