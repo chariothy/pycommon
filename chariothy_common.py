@@ -308,7 +308,7 @@ class AppTool(object):
                     try:
                         return func(*args, **kw)
                     except Exception as ex:
-                        logger.exception(ex)
+                        self.logger.exception(ex)
                         if reRaiseException:
                             raise ex
                 return wrapper
@@ -320,7 +320,7 @@ class AppTool(object):
                 try:
                     return funcOrParam(*args, **kw)
                 except Exception as ex:
-                    logger.exception(ex)
+                    self.logger.exception(ex)
                     if reRaiseException:
                         raise ex
             return wrapper
