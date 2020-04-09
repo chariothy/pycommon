@@ -90,6 +90,24 @@ def send_email(from_addr, to_addrs, subject: str, body: str, smtp_config: dict, 
     return result
 
 
+def send_mail(from_addr, to_addrs, subject: str, body: str, smtp_config: dict, debug: bool=False) -> dict:
+    """Alias to send_email
+    """
+    return send_email(from_addr, to_addrs, subject, body, smtp_config, debug)
+
+
+def email(from_addr, to_addrs, subject: str, body: str, smtp_config: dict, debug: bool=False) -> dict:
+    """Alias to send_email
+    """
+    return send_email(from_addr, to_addrs, subject, body, smtp_config, debug)
+
+
+def mail(from_addr, to_addrs, subject: str, body: str, smtp_config: dict, debug: bool=False) -> dict:
+    """Alias to send_email
+    """
+    return send_email(from_addr, to_addrs, subject, body, smtp_config, debug)
+
+
 def alignment(s, space, align='left'):
     """中英文混排对齐
     中英文混排时对齐是比较麻烦的，一个先决条件是必须是等宽字体，每个汉字占2个英文字符的位置。
@@ -284,6 +302,24 @@ class AppTool(object):
         assert(smtp and mail)
         mail_to = to_addrs if to_addrs else mail['to']
         return send_email(mail['from'], mail_to, subject, body, smtp, debug)
+
+
+    def email(self, subject: str, body: str, to_addrs=None, debug: bool=False) -> dict:
+        """Alias to send_email
+        """
+        return self.send_email(subject, body, to_addrs, debug)
+
+    
+    def mail(self, subject: str, body: str, to_addrs=None, debug: bool=False) -> dict:
+        """Alias to send_email
+        """
+        return self.send_email(subject, body, to_addrs, debug)
+
+
+    def send_mail(self, subject: str, body: str, to_addrs=None, debug: bool=False) -> dict:
+        """Alias to send_email
+        """
+        return self.send_email(subject, body, to_addrs, debug)
 
 
     def log(self, reRaise=False, message=''):
