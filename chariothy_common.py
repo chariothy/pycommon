@@ -324,6 +324,7 @@ class AppTool(object):
 
     def log(self, reRaise=False, message=''):
         """Decorator
+        !!! Should be decorated first to avoid being shielded by other decorators, such as @click.
         
         Keyword Arguments:
             reRaise {bool} -- Re-raise exception (default: {False})
