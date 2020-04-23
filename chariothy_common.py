@@ -280,7 +280,7 @@ class AppTool(object):
                     mailhost = (smtp['host'], smtp['port']),
                     fromaddr = from_addr,
                     toaddrs = to_addrs,
-                    subject = '[%(levelname)s] - %(name)s - %(message)s',
+                    subject = '%(name)s - %(levelname)s - %(message)s',
                     credentials = (smtp['user'], smtp['pwd']))
             mail_handler.setLevel(logging.ERROR)
             logger.addHandler(mail_handler)
