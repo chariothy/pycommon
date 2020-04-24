@@ -54,8 +54,7 @@ def send_email(from_addr, to_addrs, subject: str, body: str, smtp_config: dict, 
     assert(type(smtp_config) == dict)
 
     #TODO: Use schema to validate smtp_config
-    smtp = smtp_config
-
+    
     if type(from_addr) in (tuple, list):
         assert(len(from_addr) == 2)
         from_addr = formataddr(from_addr)
@@ -80,10 +79,10 @@ def send_email(from_addr, to_addrs, subject: str, body: str, smtp_config: dict, 
     msg['Subject'] = Header(subject, 'utf-8').encode()
         
     from smtplib import SMTP
-    server = SMTP(smtp['host'], smtp['port'])
+    server = SMTP(smtp_config['host'], smtp_config['port'])
     if debug:
         server.set_debuglevel(1)
-    server.login(smtp['user'], smtp['pwd'])
+    server.login(smtp_config['user'], smtp_config['pwd'])
 
     result = server.sendmail(from_addr, to_addrs, msg.as_string())
     server.quit()
@@ -176,8 +175,8 @@ class AppTool(object):
 
         self.load_config(config_dir)
 
-        smtp = self.config['smtp']
-        mail = self.config['mail']
+        smtp = self.config.get('smtp')
+        mail = self.config.get('mail')
         #TODO: Use schema to validate smtp_config
         if smtp and mail:
             if log_mail_to:
