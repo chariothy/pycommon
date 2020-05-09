@@ -6,6 +6,35 @@ from logging import handlers
 import functools
 
 
+WIN = 'Windows'
+LINUX = 'Linux'
+DARWIN = 'Darwin'
+os_sys = platform.system()
+
+def is_win():
+    return os_sys == WIN
+
+def is_linux():
+    return os_sys == LINUX
+
+def is_darwin():
+    return os_sys == DARWIN
+
+def is_macos():
+    return is_darwin()
+
+def cls():
+    if is_win():
+        os.system('cls')
+    elif is_linux() or is_macos():
+        os.system('clear')
+
+
+def get_home_dir():
+    from os.path import expanduser
+    return expanduser('~')
+
+
 def deep_merge(dict1: dict, dict2: dict) -> dict:
     """Deeply merge two dictionaries
     
@@ -147,6 +176,7 @@ def get_win_folder(name):
         Ex. AppData, Favorites, Font, History, Local AppData, My Music, SendTo, Start Menu, Startup
             My Pictures, My Video, NetHood, PrintHood, Programs, Recent Personal, Desktop, Templates
     """
+    assert is_win()
     import winreg
     key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r'Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders')
     try:
@@ -356,3 +386,43 @@ class AppTool(object):
                         raise ex
             return wrapper
         return decorator
+
+
+class GetCh:
+    """Gets a single character from standard input.  Does not echo to the screen.
+       Ex. getch = GetCh()
+           ch = getch()
+    """
+    def __init__(self):
+        os_name = platform.system()
+        if is_win():
+            self.impl = _GetchWindows()
+        elif is_linux():
+            self.impl = _GetchUnix()
+
+    def __call__(self): return str(self.impl())
+
+
+class _GetchUnix:
+    def __init__(self):
+        import tty, sys
+
+    def __call__(self):
+        import sys, tty, termios
+        fd = sys.stdin.fileno()
+        old_settings = termios.tcgetattr(fd)
+        try:
+            tty.setraw(sys.stdin.fileno())
+            ch = sys.stdin.read(1)
+        finally:
+            termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+        return ch
+
+
+class _GetchWindows:
+    def __init__(self):
+        import msvcrt
+
+    def __call__(self):
+        import msvcrt
+        return str(msvcrt.getch(), encoding='utf-8')
