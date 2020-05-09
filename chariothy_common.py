@@ -399,7 +399,8 @@ class GetCh:
             self.impl = _GetchWindows()
         elif is_linux():
             self.impl = _GetchUnix()
-        else is_macos():
+        elif is_macos():
+            # Patch for MACOS for now
             self.impl = lambda : input()
 
     def __call__(self): return str(self.impl())
