@@ -4,6 +4,8 @@ from email.utils import formataddr
 from collections.abc import Iterable
 from logging import handlers
 import functools
+import platform
+import warnings
 
 
 WIN = 'Windows'
@@ -29,6 +31,19 @@ def cls():
     elif is_linux() or is_macos():
         os.system('clear')
 
+def deprecated(func):
+    """This is a decorator which can be used to mark functions
+    as deprecated. It will result in a warning being emitted
+    when the function is used."""
+    @functools.wraps(func)
+    def new_func(*args, **kwargs):
+        warnings.simplefilter('always', DeprecationWarning)  # turn off filter
+        warnings.warn("Call to deprecated function {}.".format(func.__name__),
+                      category=DeprecationWarning,
+                      stacklevel=2)
+        warnings.simplefilter('default', DeprecationWarning)  # reset filter
+        return func(*args, **kwargs)
+    return new_func
 
 def get_home_dir():
     from os.path import expanduser
@@ -166,8 +181,7 @@ def alignment(s, space, align='left'):
         s1 = ' ' * (space // 2) + s + ' ' * (space - space // 2)
     return s1
 
-
-def get_win_folder(name):
+def get_win_dir(name):
     """Get windows folder path
        Read from \HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders
     
@@ -175,6 +189,7 @@ def get_win_folder(name):
         name {str} -- Name of folder path. 
         Ex. AppData, Favorites, Font, History, Local AppData, My Music, SendTo, Start Menu, Startup
             My Pictures, My Video, NetHood, PrintHood, Programs, Recent Personal, Desktop, Templates
+        Note: Personal == My Documents
     """
     assert is_win()
     import winreg
@@ -183,6 +198,10 @@ def get_win_folder(name):
         return winreg.QueryValueEx(key, name)[0]
     except FileNotFoundError:
         return None
+
+@deprecated
+def get_win_folder(name):
+    return get_win_folder(name)
 
 
 class MySMTPHandler(handlers.SMTPHandler):
