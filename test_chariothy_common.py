@@ -23,7 +23,7 @@ class CoreTestCase(unittest.TestCase):
         self.assertLogs(logger, logging.DEBUG)
         self.assertLogs(logger, logging.ERROR)
 
-    def test_deep_merge(self):
+    def test_deep_merge_in(self):
         dict1 = {
             'a1': 1, 
             'a2': {
@@ -45,7 +45,40 @@ class CoreTestCase(unittest.TestCase):
                 'b3': 5
             }
         }
+        self.assertDictEqual(cc.deep_merge_in(dict1, dict2), dict3)
+        self.assertDictEqual(dict1, dict3)
+
+    def test_deep_merge(self):
+        dict1 = {
+            'a1': 1, 
+            'a2': {
+                'b1': 2,
+                'b2': 3
+            }
+        }
+        dict_ori = {
+            'a1': 1, 
+            'a2': {
+                'b1': 2,
+                'b2': 3
+            }
+        }
+        dict2 = {
+            'a2': {
+                'b2': 4,
+                'b3': 5
+            }
+        }
+        dict3 = {
+            'a1': 1, 
+            'a2': {
+                'b1': 2,
+                'b2': 4,
+                'b3': 5
+            }
+        }
         self.assertDictEqual(cc.deep_merge(dict1, dict2), dict3)
+        self.assertDictEqual(dict1, dict_ori)
 
     def test_is_win(self):
         self.assertTrue(cc.is_win())
@@ -62,9 +95,14 @@ class CoreTestCase(unittest.TestCase):
     def test_is_darwin(self):
         self.assertFalse(cc.is_darwin())
 
-
     def test_get_win_folder(self):
         self.assertEqual(cc.get_win_dir('Desktop'), r'C:\Users\hytian3019\Desktop')
+
+    @cc.benchmark
+    def test_benchmark(self):
+        import time
+        time.sleep(1)
+    
 
 if __name__ == '__main__':
     unittest.main()

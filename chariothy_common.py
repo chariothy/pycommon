@@ -6,6 +6,8 @@ from logging import handlers
 import functools
 import platform
 import warnings
+import copy
+from datetime import datetime
 
 
 WIN = 'Windows'
@@ -50,12 +52,12 @@ def get_home_dir():
     return expanduser('~')
 
 
-def deep_merge(dict1: dict, dict2: dict) -> dict:
-    """Deeply merge two dictionaries
+def deep_merge_in(dict1: dict, dict2: dict) -> dict:
+    """Deeply merge dictionary2 into dictionary1
     
     Arguments:
-        dict1 {dict} -- Dictionary to be added
-        dict2 {dict} -- Dictionary to be added to dict1
+        dict1 {dict} -- Dictionary female
+        dict2 {dict} -- Dictionary mail to be added to dict1
     
     Returns:
         dict -- Merged dictionary
@@ -63,10 +65,30 @@ def deep_merge(dict1: dict, dict2: dict) -> dict:
     if type(dict1) == dict and type(dict2) == dict:
         for key in dict2.keys():
             if key in dict1.keys() and type(dict1[key]) == dict and type(dict2[key]) == dict:
-                deep_merge(dict1[key], dict2[key])
+                deep_merge_in(dict1[key], dict2[key])
             else:
                 dict1[key] = dict2[key]
     return dict1
+
+
+def deep_merge(dict1: dict, dict2: dict) -> dict:
+    """Deeply merge dictionary2 and dictionary1 then return a new dictionary
+    
+    Arguments:
+        dict1 {dict} -- Dictionary female
+        dict2 {dict} -- Dictionary mail to be added to dict1
+    
+    Returns:
+        dict -- Merged dictionary
+    """
+    if type(dict1) == dict and type(dict2) == dict:
+        dict1_copy = dict1.copy()
+        for key in dict2.keys():
+            if key in dict1.keys() and type(dict1[key]) == dict and type(dict2[key]) == dict:
+                dict1_copy[key] = deep_merge(dict1[key], dict2[key])
+            else:
+                dict1_copy[key] = dict2[key]
+    return dict1_copy
 
 
 def send_email(from_addr, to_addrs, subject: str, body: str, smtp_config: dict, debug: bool=False) -> dict:
@@ -448,3 +470,16 @@ class _GetchWindows:
     def __call__(self):
         import msvcrt
         return str(msvcrt.getch(), encoding='utf-8')
+
+
+def benchmark(func):
+    """This is a decorator which can be used to benchmark time elapsed during running func."""
+    @functools.wraps(func)
+    def new_func(*args, **kwargs):
+        start = datetime.now()
+        result = func(*args, **kwargs)
+        end = datetime.now()
+        elapsed = (end - start).microseconds
+        print(f'Elapsed {elapsed} ms during running {func.__name__}')
+        return result
+    return new_func
