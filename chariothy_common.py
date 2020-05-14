@@ -88,7 +88,8 @@ def deep_merge(dict1: dict, dict2: dict) -> dict:
                 dict1_copy[key] = deep_merge(dict1[key], dict2[key])
             else:
                 dict1_copy[key] = dict2[key]
-    return dict1_copy
+        return dict1_copy
+    return dict1
 
 
 def send_email(from_addr, to_addrs, subject: str, body: str, smtp_config: dict, debug: bool=False) -> dict:
@@ -287,7 +288,7 @@ class AppTool(object):
             config_test = __import__('config_test').CONFIG
         else:
             config_test = {}
-        self.config = deep_merge(config, config_test)
+        self.config = deep_merge(self.config, config_test)
         
         return self.config
 
