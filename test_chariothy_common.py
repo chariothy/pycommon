@@ -102,6 +102,9 @@ class CoreTestCase(unittest.TestCase):
     def test_benchmark(self):
         import time
         time.sleep(1)
+
+    def test_random_sleep(self):
+        cc.random_sleep()
     
 
 if __name__ == '__main__':

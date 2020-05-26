@@ -8,6 +8,8 @@ import platform
 import warnings
 import copy
 from datetime import datetime
+import time
+import random
 
 
 WIN = 'Windows'
@@ -484,3 +486,7 @@ def benchmark(func):
         print(f'Elapsed {elapsed} ms during running {func.__name__}')
         return result
     return new_func
+
+
+def random_sleep(min=0, max=3):
+    time.sleep(random.uniform(min, max))
