@@ -10,6 +10,7 @@ import copy
 from datetime import datetime
 import time
 import random
+import json
 
 
 WIN = 'Windows'
@@ -490,3 +491,18 @@ def benchmark(func):
 
 def random_sleep(min=0, max=3):
     time.sleep(random.uniform(min, max))
+
+
+def load_json(file_path):
+    data = None
+    with open(file_path, 'r', encoding='utf8') as fp:
+        data = json.load(fp)
+    return data
+
+
+def dump_json(file_path, data, indent=2, ensure_ascii=False, lock=False):
+    with open(file_path, 'w', encoding='utf8') as fp:
+        if lock and is_win():
+            import fcntl
+            fcntl.flock(fp, fcntl.LOCK_EX)
+        json.dump(data, fp, indent=indent, ensure_ascii=ensure_ascii)
