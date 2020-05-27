@@ -495,12 +495,16 @@ def random_sleep(min=0, max=3):
 
 def load_json(file_path):
     data = None
-    with open(file_path, 'r', encoding='utf8') as fp:
-        data = json.load(fp)
+    if os.path.exists(file_path):
+        with open(file_path, 'r', encoding='utf8') as fp:
+            data = json.load(fp)
     return data
 
 
 def dump_json(file_path, data, indent=2, ensure_ascii=False, lock=False):
+    dir_path = os.path.dirname(file_path)
+    if not os.path.exists(dir_path):
+        os.makedirs(dir_path)
     with open(file_path, 'w', encoding='utf8') as fp:
         if lock and is_win():
             import fcntl

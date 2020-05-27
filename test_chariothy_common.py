@@ -105,6 +105,20 @@ class CoreTestCase(unittest.TestCase):
 
     def test_random_sleep(self):
         cc.random_sleep()
+
+    def test_load_json(self):
+        self.assertIsNone(cc.load_json('/not-exist-file-path'))
+
+    def test_dump_json(self):
+        file_path = './data/dump.json'
+        data = {'test': 'OK'}
+        cc.dump_json(file_path, data)
+        self.assertTrue(os.path.exists(file_path))
+        
+        load_data = cc.load_json(file_path)
+        self.assertDictEqual(data, load_data)
+
+        os.remove(file_path)
     
 
 if __name__ == '__main__':
