@@ -13,3 +13,4 @@
 1. GetCh for multiple platforms.
 1. Get windows folders.
 1. @deprecated annotation.
+1. deep merge.
