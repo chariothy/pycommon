@@ -108,9 +108,10 @@ def send_email(from_addr, to_addrs, subject: str, body: str, smtp_config: dict, 
         smtp_config {dict} -- SMTP config for SMTPHandler (default: {{}}), Ex.: 
         {
             'host': 'smtp.163.com',
-            'port': 25,
+            'port': 465,
             'user': 'henrytian@163.com',
-            'pwd': '123456'
+            'pwd': '123456',
+            'ssl': True
         }
         debug {bool} -- If output debug info.
         
@@ -152,6 +153,9 @@ def send_email(from_addr, to_addrs, subject: str, body: str, smtp_config: dict, 
     server = SMTP(smtp_config['host'], smtp_config['port'])
     if debug:
         server.set_debuglevel(1)
+    if 'ssl' in smtp_config and smtp_config['ssl']:
+        server.ehlo()
+        server.starttls()
     server.login(smtp_config['user'], smtp_config['pwd'])
 
     result = server.sendmail(from_addr, to_addrs, msg.as_string())
