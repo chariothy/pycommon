@@ -278,24 +278,26 @@ class AppTool(object):
         if self.config:
             return self.config
 
-        configs_path = path.join(self.app_path, local_config_dir)
-        sys.path.append(configs_path)
-        if path.exists(path.join(configs_path, 'config.py')):
+        sys.path.append(self.app_path)
+        try:
             config = __import__('config').CONFIG
-        else:
-            config = {}
+        except Exception:
+            pass
 
-        if path.exists(path.join(configs_path, 'config_local.py')):
+        config_local_path = path.join(self.app_path, local_config_dir)
+        sys.path.append(config_local_path)
+        try:
             config_local = __import__('config_local').CONFIG
-        else:
-            config_local = {}
-        self.config = deep_merge(config, config_local)
+            self.config = deep_merge(config, config_local)
+        except Exception:
+            pass        
         
-        if '--test' in sys.argv and path.exists(path.join(configs_path, 'config_test.py')):
-            config_test = __import__('config_test').CONFIG
-        else:
-            config_test = {}
-        self.config = deep_merge(self.config, config_test)
+        if '--test' in sys.argv:
+            try:
+                config_test = __import__('config_test').CONFIG
+                self.config = deep_merge(self.config, config_test)
+            except Exception:
+                pass
         
         return self.config
 
