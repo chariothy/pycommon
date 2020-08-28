@@ -246,13 +246,13 @@ class MySMTPHandler(handlers.SMTPHandler):
         return formatter.formatMessage(record)
 
 class AppTool(object):
-    def __init__(self, app_name: str, app_path: str, config_dir: str='', log_mail_to=''):
+    def __init__(self, app_name: str, app_path: str, local_config_dir: str='', log_mail_to=''):
         self.app_name = app_name
         self.app_path = app_path
         self.config = {}
         self.logger = None
 
-        self.load_config(config_dir)
+        self.load_config(local_config_dir)
 
         smtp = self.config.get('smtp')
         mail = self.config.get('mail')
@@ -264,21 +264,21 @@ class AppTool(object):
                 self.init_logger(smtp, mail['from'], mail['to'])
 
 
-    def load_config(self, config_dir: str = '') -> dict:
+    def load_config(self, local_config_dir: str = '') -> dict:
         """Load config locally
         
         Keyword Arguments:
-            config_dir {str} -- Dir name of config files. (default: {''})
+            local_config_dir {str} -- Dir name of local config files. (default: {''})
         
         Returns:
             [dict] -- Merged config dictionary.
         """
-        assert(type(config_dir) == str)
+        assert(type(local_config_dir) == str)
 
         if self.config:
             return self.config
 
-        configs_path = path.join(self.app_path, config_dir)
+        configs_path = path.join(self.app_path, local_config_dir)
         sys.path.append(configs_path)
         if path.exists(path.join(configs_path, 'config.py')):
             config = __import__('config').CONFIG
