@@ -111,7 +111,7 @@ def send_email(from_addr, to_addrs, subject: str, body: str, smtp_config: dict, 
             'port': 465,
             'user': 'henrytian@163.com',
             'pwd': '123456',
-            'ssl': True
+            'type': 'plain'         # plain (default) / ssl / tls
         }
         debug {bool} -- If output debug info.
         
@@ -149,13 +149,18 @@ def send_email(from_addr, to_addrs, subject: str, body: str, smtp_config: dict, 
     from email.header import Header
     msg['Subject'] = Header(subject, 'utf-8').encode()
         
-    from smtplib import SMTP
-    server = SMTP(smtp_config['host'], smtp_config['port'])
+    from smtplib import SMTP, SMTP_SSL
+    if smtp_config.get('type') == 'ssl':
+        server = SMTP_SSL(smtp_config['host'], smtp_config['port'])
+    elif smtp_config.get('type') == 'tls':
+        server = SMTP(smtp_config['host'], smtp_config['port'])
+        server.starttls()
+    else:
+        server = SMTP(smtp_config['host'], smtp_config['port'])
+    
+    server.ehlo()
     if debug:
         server.set_debuglevel(1)
-    if 'ssl' in smtp_config and smtp_config['ssl']:
-        server.ehlo()
-        server.starttls()
     server.login(smtp_config['user'], smtp_config['pwd'])
 
     result = server.sendmail(from_addr, to_addrs, msg.as_string())
