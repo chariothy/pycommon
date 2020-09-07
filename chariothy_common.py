@@ -217,7 +217,7 @@ def alignment(s, space, align='left'):
     return s1
 
 def get_win_dir(name):
-    """Get windows folder path
+    r"""Get windows folder path
        Read from \HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders
     
     Arguments:
