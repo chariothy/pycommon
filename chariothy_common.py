@@ -251,22 +251,14 @@ class MySMTPHandler(handlers.SMTPHandler):
         return formatter.formatMessage(record)
 
 class AppTool(object):
-    def __init__(self, app_name: str, app_path: str, local_config_dir: str='', log_mail_to=''):
+    def __init__(self, app_name: str, app_path: str, local_config_dir: str=''):
         self.app_name = app_name
         self.app_path = app_path
         self.config = {}
         self.logger = None
 
         self.load_config(local_config_dir)
-
-        smtp = self.config.get('smtp')
-        mail = self.config.get('mail')
-        #TODO: Use schema to validate smtp_config
-        if smtp and mail:
-            if log_mail_to:
-                self.init_logger(smtp, mail['from'], log_mail_to)
-            else:
-                self.init_logger(smtp, mail['from'], mail['to'])
+        self.init_logger()
 
 
     def load_config(self, local_config_dir: str = '') -> dict:
@@ -279,9 +271,6 @@ class AppTool(object):
             [dict] -- Merged config dictionary.
         """
         assert(type(local_config_dir) == str)
-
-        if self.config:
-            return self.config
 
         sys.path.append(self.app_path)
         try:
@@ -307,59 +296,44 @@ class AppTool(object):
         return self.config
 
 
-    def init_logger(self, smtp_config: dict={}, from_addr='', to_addrs='') -> logging.Logger:
+    def init_logger(self) -> logging.Logger:
         """Initialize logger
         
-        Keyword Arguments:
-            smtp_config {dict} -- SMTP config for SMTPHandler (default: {{}}), Ex.: 
-                {
-                    'host': 'smtp.163.com',
-                    'port': 25,
-                    'user': 'henrytian@163.com',
-                    'pwd': '123456'
-                }
-                If is an empty dict, try to read from config.
-            from_addr {str|tuple} -- From address, can be email or (name, email).
-                Ex.: ('Henry TIAN', 'henrytian@163.com')
-                If is an empty str, try to read from config.
-            to_addrs {str|tuple} -- To address, can be email or list of emails or list of (name, email)
-                Ex.: (('Henry TIAN', 'henrytian@163.com'),)
-                If is an empty str, try to read from config.
         Returns:
             [logger] -- Initialized logger.
         """
-        assert(type(smtp_config) == dict)
-        assert(type(from_addr) in (str, tuple, list))
-        assert(type(to_addrs) in (str, tuple, list))
 
-        if self.logger and not smtp_config:
-            return self.logger
+        smtp = self.config.get('smtp')
+        mail = self.config.get('mail')
+        logConfig = self.config.get('log', {})
 
         logs_path = path.join(self.app_path, 'logs')
         if not os.path.exists(logs_path):
             os.mkdir(logs_path)
 
         logger = logging.getLogger(self.app_name)
-        logger.setLevel(logging.DEBUG)
+        logLevel = logConfig.get('level', logging.DEBUG)
+        logger.setLevel(logLevel)
 
-        rf_handler = handlers.TimedRotatingFileHandler(path.join(logs_path, f'{self.app_name}.log'), when='D', interval=1, backupCount=7)
-        rf_handler.suffix = "%Y-%m-%d_%H-%M-%S.log"
-        rf_handler.level = logging.INFO
-        rf_handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
-        logger.addHandler(rf_handler)
+        logDest = logConfig.get('dest', [])
 
-        if smtp_config:
-            #TODO: Use schema to validate smtp_config
-            smtp = smtp_config
-            if type(from_addr) in (tuple, list):
-                assert(len(from_addr) == 2)
-                from_addr = formataddr(from_addr)
+        if 'file' in logDest:
+            rf_handler = handlers.TimedRotatingFileHandler(path.join(logs_path, f'{self.app_name}.log'), when='D', interval=1, backupCount=7)
+            rf_handler.suffix = "%Y-%m-%d_%H-%M-%S.log"
+            rf_handler.level = logging.INFO
+            rf_handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
+            logger.addHandler(rf_handler)
 
-            if type(to_addrs) in (tuple, list):
-                assert(len(to_addrs) > 0)
-                if type(to_addrs[0]) in (tuple, list):
-                    #All (name, tuple)
-                    to_addrs = [formataddr(addr) for addr in to_addrs]
+        if smtp and 'mail' in logDest:
+            from_addr = mail.get('from', (smtp['user'], smtp['user']))
+            #TODO: Use schema to validate smtp
+            assert(type(from_addr) in (tuple, list) and len(from_addr) == 2)
+            from_addr = formataddr(from_addr)
+
+            to_addrs = logConfig.get('receiver', mail.get('to'))
+            assert(len(to_addrs) > 0 and type(to_addrs[0]) in (tuple, list))
+            #All (name, tuple)
+            to_addrs = [formataddr(addr) for addr in to_addrs]
 
             mail_handler = MySMTPHandler(
                     mailhost = (smtp['host'], smtp['port']),
@@ -370,13 +344,14 @@ class AppTool(object):
             mail_handler.setLevel(logging.ERROR)
             logger.addHandler(mail_handler)
 
-        if os.environ.get('RUN_IN_CRON') != '1':
+        if 'stdout' in logDest:
             st_handler = logging.StreamHandler()
             st_handler.level = logging.DEBUG
             st_handler.setFormatter(logging.Formatter("%(message)s"))
             logger.addHandler(st_handler)
         self.logger = logger
         return logger
+
 
     def send_email(self, subject: str, body: str, to_addrs=None, debug: bool=False) -> dict:
         """A shortcut of global send_email
