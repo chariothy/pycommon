@@ -347,7 +347,7 @@ class AppTool(object):
         if 'stdout' in logDest:
             st_handler = logging.StreamHandler()
             st_handler.level = logging.DEBUG
-            st_handler.setFormatter(logging.Formatter("%(message)s"))
+            st_handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
             logger.addHandler(st_handler)
         self.logger = logger
         return logger
