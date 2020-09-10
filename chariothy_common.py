@@ -275,17 +275,17 @@ class AppTool(object):
 
         sys.path.append(self.app_path)
         try:
-            config = __import__('config').CONFIG
+            self.config = __import__('config').CONFIG
         except Exception:
-            pass
+            self.config = {}
 
         config_local_path = path.join(self.app_path, local_config_dir)
         sys.path.append(config_local_path)
         try:
             config_local = __import__('config_local').CONFIG
-            self.config = deep_merge(config, config_local)
+            self.config = deep_merge(self.config, config_local)
         except Exception:
-            pass        
+            pass
         
         if '--test' in sys.argv:
             try:
@@ -357,8 +357,8 @@ class AppTool(object):
     def send_email(self, subject: str, body: str, to_addrs=None, debug: bool=False) -> dict:
         """A shortcut of global send_email
         """
-        smtp = self.config['smtp']
-        mail = self.config['mail']
+        smtp = self.config.get('smtp')
+        mail = self.config.get('mail')
         #TODO: Use schema to validate smtp_config
         assert(smtp and mail)
         mail_to = to_addrs if to_addrs else mail['to']
