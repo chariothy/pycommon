@@ -250,6 +250,7 @@ class MySMTPHandler(handlers.SMTPHandler):
         formatter = logging.Formatter(fmt=self.subject)
         return formatter.formatMessage(record)
 
+
 class AppTool(object):
     def __init__(self, app_name: str, app_path: str, local_config_dir: str=''):
         self.app_name = app_name
@@ -380,6 +381,46 @@ class AppTool(object):
         """Alias to send_email
         """
         return self.send_email(subject, body, to_addrs, debug)
+
+
+    def debug(self, msg, *args, **kwargs):
+        self.logger.debug(msg, *args, **kwargs)
+
+
+    def D(self, msg, *args, **kwargs):
+        self.logger.debug(msg, *args, **kwargs)
+
+
+    def info(self, msg, *args, **kwargs):
+        self.logger.info(msg, *args, **kwargs)
+
+
+    def I(self, msg, *args, **kwargs):
+        self.logger.info(msg, *args, **kwargs)
+
+
+    def warn(self, msg, *args, **kwargs):
+        self.logger.warn(msg, *args, **kwargs)
+
+
+    def W(self, msg, *args, **kwargs):
+        self.logger.warn(msg, *args, **kwargs)
+
+
+    def error(self, msg, *args, **kwargs):
+        self.logger.error(msg, *args, **kwargs)
+
+
+    def E(self, msg, *args, **kwargs):
+        self.logger.error(msg, *args, **kwargs)
+
+
+    def fatal(self, msg, *args, **kwargs):
+        self.logger.fatal(msg, *args, **kwargs)
+
+
+    def F(self, msg, *args, **kwargs):
+        self.logger.fatal(msg, *args, **kwargs)
 
 
     def log(self, reRaise=False, message=''):
