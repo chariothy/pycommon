@@ -520,8 +520,8 @@ def random_sleep(min=0, max=3):
     time.sleep(random.uniform(min, max))
 
 
-def load_json(file_path):
-    data = None
+def load_json(file_path, default=None):
+    data = default
     if os.path.exists(file_path):
         with open(file_path, 'r', encoding='utf8') as fp:
             data = json.load(fp)
