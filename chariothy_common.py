@@ -253,13 +253,23 @@ class MySMTPHandler(handlers.SMTPHandler):
 
 class AppTool(object):
     def __init__(self, app_name: str, app_path: str, local_config_dir: str=''):
-        self.app_name = app_name
-        self.app_path = app_path
-        self.config = {}
-        self.logger = None
+        self._app_name = app_name
+        self._app_path = app_path
+        self._config = {}
+        self._logger = None
 
         self.load_config(local_config_dir)
         self.init_logger()
+
+
+    @property
+    def config(self):
+        return self._config
+
+
+    @property
+    def logger(self):
+        return self._logger
 
 
     def load_config(self, local_config_dir: str = '') -> dict:
@@ -273,28 +283,28 @@ class AppTool(object):
         """
         assert(type(local_config_dir) == str)
 
-        sys.path.append(self.app_path)
+        sys.path.append(self._app_path)
         try:
-            self.config = __import__('config').CONFIG
+            self._config = __import__('config').CONFIG
         except Exception:
-            self.config = {}
+            self._config = {}
 
-        config_local_path = path.join(self.app_path, local_config_dir)
+        config_local_path = path.join(self._app_path, local_config_dir)
         sys.path.append(config_local_path)
         try:
             config_local = __import__('config_local').CONFIG
-            self.config = deep_merge(self.config, config_local)
+            self._config = deep_merge(self._config, config_local)
         except Exception:
             pass
         
         if '--test' in sys.argv:
             try:
                 config_test = __import__('config_test').CONFIG
-                self.config = deep_merge(self.config, config_test)
+                self._config = deep_merge(self._config, config_test)
             except Exception:
                 pass
         
-        return self.config
+        return self._config
 
 
     def init_logger(self) -> logging.Logger:
@@ -304,22 +314,22 @@ class AppTool(object):
             [logger] -- Initialized logger.
         """
 
-        smtp = self.config.get('smtp')
-        mail = self.config.get('mail')
-        logConfig = self.config.get('log', {})
+        smtp = self._config.get('smtp')
+        mail = self._config.get('mail')
+        logConfig = self._config.get('log', {})
 
-        logs_path = path.join(self.app_path, 'logs')
+        logs_path = path.join(self._app_path, 'logs')
         if not os.path.exists(logs_path):
             os.mkdir(logs_path)
 
-        logger = logging.getLogger(self.app_name)
+        logger = logging.getLogger(self._app_name)
         logLevel = logConfig.get('level', logging.DEBUG)
         logger.setLevel(logLevel)
 
         logDest = logConfig.get('dest', [])
 
         if 'file' in logDest:
-            rf_handler = handlers.TimedRotatingFileHandler(path.join(logs_path, f'{self.app_name}.log'), when='D', interval=1, backupCount=7)
+            rf_handler = handlers.TimedRotatingFileHandler(path.join(logs_path, f'{self._app_name}.log'), when='D', interval=1, backupCount=7)
             rf_handler.suffix = "%Y-%m-%d_%H-%M-%S.log"
             rf_handler.level = logging.INFO
             rf_handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
@@ -350,15 +360,15 @@ class AppTool(object):
             st_handler.level = logging.DEBUG
             st_handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
             logger.addHandler(st_handler)
-        self.logger = logger
+        self._logger = logger
         return logger
 
 
     def send_email(self, subject: str, body: str, to_addrs=None, debug: bool=False) -> dict:
         """A shortcut of global send_email
         """
-        smtp = self.config.get('smtp')
-        mail = self.config.get('mail')
+        smtp = self._config.get('smtp')
+        mail = self._config.get('mail')
         #TODO: Use schema to validate smtp_config
         assert(smtp and mail)
         mail_to = to_addrs if to_addrs else mail['to']
@@ -384,43 +394,23 @@ class AppTool(object):
 
 
     def debug(self, msg, *args, **kwargs):
-        self.logger.debug(msg, *args, **kwargs)
-
-
-    def D(self, msg, *args, **kwargs):
-        self.logger.debug(msg, *args, **kwargs)
+        self._logger.debug(msg, *args, **kwargs)
 
 
     def info(self, msg, *args, **kwargs):
-        self.logger.info(msg, *args, **kwargs)
-
-
-    def I(self, msg, *args, **kwargs):
-        self.logger.info(msg, *args, **kwargs)
+        self._logger.info(msg, *args, **kwargs)
 
 
     def warn(self, msg, *args, **kwargs):
-        self.logger.warn(msg, *args, **kwargs)
-
-
-    def W(self, msg, *args, **kwargs):
-        self.logger.warn(msg, *args, **kwargs)
+        self._logger.warn(msg, *args, **kwargs)
 
 
     def error(self, msg, *args, **kwargs):
-        self.logger.error(msg, *args, **kwargs)
-
-
-    def E(self, msg, *args, **kwargs):
-        self.logger.error(msg, *args, **kwargs)
+        self._logger.error(msg, *args, **kwargs)
 
 
     def fatal(self, msg, *args, **kwargs):
-        self.logger.fatal(msg, *args, **kwargs)
-
-
-    def F(self, msg, *args, **kwargs):
-        self.logger.fatal(msg, *args, **kwargs)
+        self._logger.fatal(msg, *args, **kwargs)
 
 
     def log(self, reRaise=False, message=''):
@@ -453,7 +443,7 @@ class AppTool(object):
                 try:
                     return func(*args, **kw)
                 except Exception as ex:
-                    self.logger.exception(message if message else str(ex))
+                    self._logger.exception(message if message else str(ex))
                     if reRaise:
                         raise ex
             return wrapper
