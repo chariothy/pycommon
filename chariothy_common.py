@@ -527,3 +527,11 @@ def dump_json(file_path, data, indent=2, ensure_ascii=False, lock=False):
             import fcntl
             fcntl.flock(fp, fcntl.LOCK_EX)
         json.dump(data, fp, indent=indent, ensure_ascii=ensure_ascii)
+
+
+def now():
+    return time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+
+
+def today():
+    return time.strftime("%Y-%m-%d", time.localtime())
