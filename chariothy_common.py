@@ -409,6 +409,14 @@ class AppTool(object):
         self._logger.error(msg, *args, **kwargs)
 
 
+    def err(self, msg, *args, **kwargs):
+        self._logger.error(msg, *args, **kwargs)
+
+
+    def ex(self, msg, *args, **kwargs):
+        self._logger.exception(msg, *args, **kwargs)
+
+
     def fatal(self, msg, *args, **kwargs):
         self._logger.fatal(msg, *args, **kwargs)
 
