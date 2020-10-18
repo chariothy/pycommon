@@ -14,6 +14,14 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+    - name: Set output
+      id: vars
+      run: |
+        echo ::set-output name=date::$(date +'%Y%m%d')
+        echo ::set-output name=tag::${GITHUB_REF/refs\/tags\//}
+        echo ::set-output name=rep::$(echo $GITHUB_REPOSITORY | sed 's/-docker$//')
+
+    - uses: actions/checkout@v2
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
@@ -30,4 +38,4 @@ jobs:
       run: |
         python setup.py sdist bdist_wheel
         twine upload --verbose dist/*
-        anaconda upload dist/*
+        anaconda upload --no-progress -p $GITHUB_REPOSITORY dist/*
