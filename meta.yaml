@@ -1,0 +1,14 @@
+package:
+  name: chariothy_common
+  version: 0.1.50
+
+requirements:
+  run:
+    - python
+about:
+  home: https://github.com/chariothy/pycommon.git
+  license: MIT
+  license_family: MIT
+  license_file: LICENSE.md
+  summary: Common code for myself
+  description: See the package README.md for more information.
