@@ -38,4 +38,4 @@ jobs:
       run: |
         python setup.py sdist bdist_wheel
         twine upload --verbose dist/*
-        anaconda upload --no-progress -p $GITHUB_REPOSITORY dist/*
+        anaconda upload --no-progress -p chariothy-common dist/*
