@@ -4,7 +4,7 @@
 
 ## Features:
 
-1. Combine config & config_local.
+1. Combine config & ENV variable & config_local & config_test (if --test).
 1. @log annotation.
 1. logger helper.
 1. email helper.
