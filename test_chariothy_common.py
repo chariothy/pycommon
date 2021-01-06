@@ -1,24 +1,15 @@
 import unittest, os, logging
 import chariothy_common as cc
+from config_sample import CONFIG
+from exception import AppToolError
 
-MAIL = {
-    'from': ('Hongyu TIAN', 'henrytian@163.com'),
-    'to': (('Hongyu TIAN', 'henrytian@163.com'),)
-}
-
-SMTP = {
-    'host': 'smtp.163.com',
-    'port': 25,
-    'user': 'henrytian@163.com',
-    'pwd': '123456'
-}
 
 class CoreTestCase(unittest.TestCase):
     def setUp(self):
-        self.app_tool = cc.AppTool('test', os.getcwd())
+        self.app_tool = cc.AppTool('test', os.getcwd(), config_name='config_sample')
 
     def test_app_tool(self):
-        logger = self.app_tool.init_logger(SMTP, MAIL['from'], MAIL['to'])
+        logger = self.app_tool.init_logger()
         self.assertLogs(logger, logging.INFO)
         self.assertLogs(logger, logging.DEBUG)
         self.assertLogs(logger, logging.ERROR)
@@ -120,6 +111,40 @@ class CoreTestCase(unittest.TestCase):
 
         os.remove(file_path)
     
+    
+    def test_get_config(self):
+        """
+        docstring
+        """
+        self.assertDictEqual(CONFIG, self.app_tool.config)
+
+        self.assertTupleEqual(CONFIG['mail']['from'], self.app_tool.get('mail.from'))
+        self.assertTupleEqual(CONFIG['mail']['from'], self.app_tool['mail.from'])
+
+        self.assertEqual(CONFIG['mail']['from'][0], self.app_tool.get('mail.from[0]'))
+        self.assertEqual(CONFIG['mail']['from'][-1], self.app_tool['mail.from[-1]'])
+
+        self.assertRaises(AppToolError, lambda k: self.app_tool[k], 'mail.from.test')
+        self.assertIsNone(self.app_tool.get('mail.from.test'))
+        self.assertEqual(1, self.app_tool.get('mail.from.test', 1))
+
+        self.assertRaises(AppToolError, lambda k: self.app_tool[k], 'mail.[0]')
+        self.assertRaises(AppToolError, lambda k: self.app_tool.get(k), 'mail.[0]')
+
+        self.assertRaises(AppToolError, lambda k: self.app_tool[k], 'mail.from[0]x')
+        self.assertRaises(AppToolError, lambda k: self.app_tool.get(k), 'mail.from[0]x')
+
+        self.assertRaises(AppToolError, lambda k: self.app_tool[k], 'mail.fromx[0]')
+        self.assertRaises(AppToolError, lambda k: self.app_tool.get(k), 'mail.fromx[0]')
+
+        self.assertRaises(AppToolError, lambda k: self.app_tool[k], 'mail.smtp[0]')
+        self.assertRaises(AppToolError, lambda k: self.app_tool.get(k), 'mail.smtp[0]')
+
+        self.assertRaises(AppToolError, lambda k: self.app_tool[k], 'mail.smtp.port.test')
+        self.assertIsNone(self.app_tool.get('mail.smtp.port.test'))
+        self.assertEqual(1, self.app_tool.get('mail.smtp.port.test', 1))
+        
+        self.assertEqual(CONFIG['test.key']['from'][0], self.app_tool['test#key.from[0]'])
 
 if __name__ == '__main__':
     unittest.main()

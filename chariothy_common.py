@@ -11,6 +11,9 @@ from datetime import datetime
 import time
 import random
 import json
+import re
+
+from exception import AppToolError
 
 
 WIN = 'Windows'
@@ -235,13 +238,14 @@ class MySMTPHandler(handlers.SMTPHandler):
 
 
 class AppTool(object):
-    def __init__(self, app_name: str, app_path: str, local_config_dir: str=''):
+    def __init__(self, app_name: str, app_path: str, local_config_dir: str='', config_name: str='config'):
         self._app_name = app_name
         self._app_path = app_path
         self._config = {}
         self._logger = None
+        self._reg_index = re.compile(r'\[([\+\-]?\d+)\]')
 
-        self.load_config(local_config_dir)
+        self.load_config(local_config_dir, config_name)
         self.init_logger()
 
 
@@ -255,7 +259,7 @@ class AppTool(object):
         return self._logger
 
 
-    def load_config(self, local_config_dir: str = '') -> dict:
+    def load_config(self, local_config_dir: str = '', config_name: str='config') -> dict:
         """Load config locally
         
         Keyword Arguments:
@@ -268,21 +272,21 @@ class AppTool(object):
 
         sys.path.append(self._app_path)
         try:
-            self._config = __import__('config').CONFIG
+            self._config = __import__(config_name).CONFIG
         except Exception:
             self._config = {}
 
         config_local_path = path.join(self._app_path, local_config_dir)
         sys.path.append(config_local_path)
         try:
-            config_local = __import__('config_local').CONFIG
+            config_local = __import__(config_name + '_local').CONFIG
             self._config = deep_merge(self._config, config_local)
         except Exception:
             pass
         
         if '--test' in sys.argv:
             try:
-                config_test = __import__('config_test').CONFIG
+                config_test = __import__(config_name + '_test').CONFIG
                 self._config = deep_merge(self._config, config_test)
             except Exception:
                 pass
@@ -423,14 +427,111 @@ class AppTool(object):
         return decorator
 
 
-    def get(self, key, default=None):
+    def get(self, key, default=None, dot_replacement_for_key=None, check=False):
+        """Get config value, keys are connected by dot, and use environment value if exists
+        Get config value, 
+            - if key exists in environment, use env value,
+            - if not, then if exists in config, use config item value,
+            - if not, then return default value.
+        Ex. _config = {
+                'a': {
+                    'b': 'c', 
+                    'd': [{'e': 'f'}]
+                }
+            }
+            1. getx('a.b', 'e')
+            - if defined environment varible A.B = 'd', then return 'd',
+            - if not, then return 'c',
+            - if not, then return 'e'.
+            
+            2. getx('a.b[0].e') , getx('a.b[-1].e')
+            - will return 'f'.
+
+        If you have to use item key with dot, you can use dot_replacement_for_key.
+        Ex. _config = {'a': {'b.c': 'd'}}
+            3. getx('a.b#c', dot_replacement_for_key='#')
+            - will retuurn 'd' (if no dot_replacement_for_key will return None)
+
+
+        Args:
+            key (str): Key for config item which are coneected by dot.
+            default (any, optional): Default value if key does exist. Defaults to None.
+            dot_replacement_for_key (str, optional): To support keys like "a.b". If "#" is given, "a#b" can be recognized as "a.b" . Defaults to None.
+            check (bool, optional): If True, func will raise exception if key does not exist . Defaults to False.
+
+        Returns:
+            any: return config value
         """
-        Get config value, if key does not exist then return default value
-        """
-        if key in self._config:
-            return self._config[key]
-        else:
-            return default
+        full_key = self._app_name + '_' + key.replace('.', '_').replace(' ', '_')
+        if dot_replacement_for_key:
+            full_key = full_key.replace(dot_replacement_for_key, '_')
+        full_key = full_key.upper()
+        if full_key in os.environ.keys():
+            return os.environ.get(full_key)
+
+        key_parts = key.split('.')
+        config = self._config
+        parsed_keys = []
+        
+        for key_part in key_parts:
+            if dot_replacement_for_key:
+                key_part = key_part.replace(dot_replacement_for_key, '.')
+            parsed_keys.append(key_part)
+            parsing_key = '.'.join(parsed_keys)
+            config_str = f'Config("{parsing_key}")={config}'
+            match = self._reg_index.search(key_part)
+
+            if match:
+                # For list or tuple
+                matched_str = match.group()
+                matched_index = match.groups()[0]
+                matched_start = match.start()
+                matched_end = match.end()
+                if matched_start == 0:
+                    raise AppToolError(f'Failed to get config at "{parsing_key}": "{matched_str}" should have parent.')
+                if matched_end != len(key_part):
+                    raise AppToolError(f'Failed to get config at "{parsing_key}": "{matched_str}" should be at the tail.')
+
+                key_part = key_part.replace(matched_str, '')
+                if type(config) is not dict or key_part not in config:
+                    raise AppToolError(f'Failed to get config at "{parsing_key}": "{key_part}" is not in config. {config_str}')
+
+                config = config[key_part]
+                amend_parsed_keys = parsed_keys[:-1]
+                amend_parsed_keys.append(key_part)
+                amend_parsed_key = '.'.join(amend_parsed_keys)
+                config_str = f'Config("{amend_parsed_key}")={config}'
+                if type(config) is not list and type(config) is not tuple:
+                    raise AppToolError(f'Failed to get config at "{parsing_key}": Config is not list or tuple. {config_str}')
+
+                key_index = int(matched_index)
+                try:
+                    config = config[key_index]
+                except IndexError as ex:
+                    raise AppToolError(f'Failed to get config at "{parsing_key}": Key index "{key_index}" is beyond size. {config_str}')
+            else:
+                # for dict
+                amend_parsed_key = '.'.join(parsed_keys[:-1])
+                config_str = f'Config("{amend_parsed_key}")={config}'
+                if check:
+                    if type(config) is not dict:
+                        raise AppToolError(f'Failed to get config at "{parsing_key}": Config is not dict. {config_str}')
+
+                    if key_part not in config:
+                        raise AppToolError(f'Failed to get config at "{parsing_key}": "{key_part}" is not in config. {config_str}')
+
+                try:
+                    config = config.get(key_part, default)
+                except (AttributeError, TypeError) as ex:
+                    if check:
+                        raise AppToolError(f'Failed to get config at "{parsing_key}": {ex}. {config_str}')
+                    config = default
+
+        return config
+
+
+    def __getitem__(self, key):
+        return self.get(key, dot_replacement_for_key='#', check=True)
 
 
 class GetCh:

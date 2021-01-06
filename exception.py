@@ -1,0 +1,2 @@
+class AppToolError(Exception):
+    pass
