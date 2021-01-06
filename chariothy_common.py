@@ -423,6 +423,16 @@ class AppTool(object):
         return decorator
 
 
+    def get(self, key, default=None):
+        """
+        Get config value, if key does not exist then return default value
+        """
+        if key in self._config:
+            return self._config[key]
+        else:
+            return default
+
+
 class GetCh:
     """Gets a single character from standard input.  Does not echo to the screen.
        Ex. getch = GetCh()
