@@ -151,7 +151,7 @@ def send_email(from_addr, to_addrs, subject: str, text_body: str='', smtp_config
         assert(len(to_addrs) > 0)
         if type(to_addrs[0]) in (tuple, list):
             #All (name, tuple)
-            to_addrs = [formataddr(addr) for addr in to_addrs]
+            to_addrs = (formataddr(addr) for addr in to_addrs)
             to_addr_str = ','.join(to_addrs)
         elif type(to_addrs[0]) is str:
             #All emails
@@ -184,7 +184,7 @@ def send_email(from_addr, to_addrs, subject: str, text_body: str='', smtp_config
                         'type': guess_type(image_path)[0].split('/', 1)
                     })
             # note that we needed to peel the <> off the msgid for use in the html.
-            html_body = html_body.format(*[x['cid'][1:-1] for x in img_nodes])
+            html_body = html_body.format(*(x['cid'][1:-1] for x in img_nodes))
         msg.add_alternative(html_body, subtype='html')
 
         for img_node in img_nodes:
@@ -219,7 +219,7 @@ def send_email(from_addr, to_addrs, subject: str, text_body: str='', smtp_config
         with open(os.path.join(email_file_dir, email_file_name), 'wb') as fp:
             fp.write(msg.as_bytes(policy=SMTP))
         result = {}
-        
+
     if not send_to_file:
         from smtplib import SMTP, SMTP_SSL
         if smtp_config.get('type') == 'ssl':

@@ -13,7 +13,7 @@ PACKAGES = ['chariothy_common']
 URL = 'https://github.com/chariothy/pycommon.git'
 EMAIL = 'chariothy@gmail.com'
 AUTHOR = 'Henry TIAN'
-VERSION = '1.2.2'
+VERSION = '1.2.3'
 
 LONG_DESCRIPTION = '''
 This is a helper which includes common methods and classes used by myself.

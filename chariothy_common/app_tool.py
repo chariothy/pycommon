@@ -144,7 +144,7 @@ class AppTool(object):
             to_addrs = logConfig.get('receiver', mail.get('to'))
             assert(len(to_addrs) > 0 and type(to_addrs[0]) in (tuple, list))
             #All (name, tuple)
-            to_addrs = [formataddr(addr) for addr in to_addrs]
+            to_addrs = (formataddr(addr) for addr in to_addrs)
 
             mail_handler = MySMTPHandler(
                     mailhost = (smtp['host'], smtp['port']),
