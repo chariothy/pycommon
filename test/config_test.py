@@ -8,6 +8,7 @@ CONFIG = {
         'receiver': (('Hongyu TIAN', '6314849@qq.com'),) # 日志邮件接收者，如果为空，则使用mail.to设置
     },
     'mail': {
+        'dest': 'file',   # 邮件实际不发送，而是写入文件
         'from': ('Hongyu TIAN', '15050506668@163.com'),
         'to': (('Hongyu TIAN', '6314849@qq.com'),)
     },
@@ -17,7 +18,14 @@ CONFIG = {
         'user': '15050506668@163.com',
         'pwd': '123456'
     },
+    'demo': {
+        'host': 'smtp.163.com',
+    },
     'demo.key': {
+        'from': ('Hongyu TIAN', '15050506668@163.com'),
+        'to': (('Hongyu TIAN', '6314849@qq.com'),)
+    },
+    'demo.key2': {
         'from': ('Hongyu TIAN', '15050506668@163.com'),
         'to': (('Hongyu TIAN', '6314849@qq.com'),)
     },

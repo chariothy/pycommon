@@ -1,8 +1,10 @@
 import unittest, os, logging
 
-from chariothy_common import deep_merge, deep_merge_in, benchmark, is_win, is_linux, is_macos, is_darwin, random_sleep, dump_json, load_json
-from config_test import CONFIG
+from chariothy_common import deep_merge, deep_merge_in, benchmark, is_win, is_linux, is_macos, is_darwin
+from chariothy_common import random_sleep, dump_json, load_json, send_email, get
 from chariothy_common import AppTool, AppToolError
+
+from config_test import CONFIG
 
 
 dict1 = {
@@ -37,10 +39,19 @@ dict3 = {
 
 class CoreTestCase(unittest.TestCase):
     def setUp(self):
-        self.app_tool = AppTool('test', os.getcwd(), config_name='config_test')
+        from os import environ as env
+        self.demo_value = 'DEMO_VALUE'
+        env['TEST_DEMO_KEY'] = self.demo_value # The first TEST is app_name
+        env['TEST_DEMO_HOST'] = self.demo_value
+        env['TEST_DEMO_KEY_FROM_0'] = self.demo_value
+        env['TEST_DEMO_KEY_FROM_0_0'] = self.demo_value
+        
+        self.APP_NAME = 'test'
+        self.APP = AppTool(self.APP_NAME, os.getcwd(), config_name='config_test')
+        #print(self.APP.config)
 
     def test_app_tool(self):
-        logger = self.app_tool.init_logger()
+        logger = self.APP.init_logger()
         self.assertLogs(logger, logging.INFO)
         self.assertLogs(logger, logging.DEBUG)
         self.assertLogs(logger, logging.ERROR)
@@ -91,50 +102,127 @@ class CoreTestCase(unittest.TestCase):
         """
         docstring
         """
-        self.assertDictEqual(CONFIG, self.app_tool.config)
+        self.assertDictEqual(CONFIG, self.APP.config)
 
-        self.assertTupleEqual(CONFIG['mail']['from'], self.app_tool.get('mail.from'))
-        self.assertTupleEqual(CONFIG['mail']['from'], self.app_tool['mail.from'])
+        self.assertTupleEqual(CONFIG['mail']['from'], self.APP.get('mail.from'))
+        self.assertTupleEqual(CONFIG['mail']['from'], self.APP['mail.from'])
 
-        self.assertEqual(CONFIG['mail']['from'][0], self.app_tool.get('mail.from[0]'))
-        self.assertEqual(CONFIG['mail']['from'][-1], self.app_tool['mail.from[-1]'])
+        self.assertEqual(CONFIG['mail']['from'][0], self.APP.get('mail.from[0]'))
+        self.assertEqual(CONFIG['mail']['from'][-1], self.APP['mail.from[-1]'])
 
-        self.assertEqual(CONFIG['mail']['to'][0][0], self.app_tool.get('mail.to[0][0]'))
+        self.assertEqual(CONFIG['mail']['to'][0][0], self.APP.get('mail.to[0][0]'))
 
-        self.assertRaises(AppToolError, lambda k: self.app_tool[k], 'mail.from.test')
-        self.assertIsNone(self.app_tool.get('mail.from.test'))
-        self.assertEqual(1, self.app_tool.get('mail.from.test', 1))
+        self.assertRaises(AppToolError, lambda k: self.APP[k], 'mail.from.test')
+        self.assertIsNone(self.APP.get('mail.from.test'))
+        self.assertEqual(1, self.APP.get('mail.from.test', 1))
 
-        self.assertRaises(AppToolError, lambda k: self.app_tool[k], 'mail.[0]')
-        self.assertRaises(AppToolError, lambda k: self.app_tool.get(k), 'mail.[0]')
+        self.assertRaises(AppToolError, lambda k: self.APP[k], 'mail.[0]')
+        self.assertRaises(AppToolError, lambda k: self.APP.get(k), 'mail.[0]')
 
-        self.assertRaises(AppToolError, lambda k: self.app_tool[k], 'mail.from[0]x')
-        self.assertRaises(AppToolError, lambda k: self.app_tool.get(k), 'mail.from[0]x')
+        self.assertRaises(AppToolError, lambda k: self.APP[k], 'mail.from[0]x')
+        self.assertRaises(AppToolError, lambda k: self.APP.get(k), 'mail.from[0]x')
 
-        self.assertRaises(AppToolError, lambda k: self.app_tool[k], 'mail.fromx[0]')
-        self.assertRaises(AppToolError, lambda k: self.app_tool.get(k), 'mail.fromx[0]')
+        self.assertRaises(AppToolError, lambda k: self.APP[k], 'mail.fromx[0]')
+        self.assertRaises(AppToolError, lambda k: self.APP.get(k), 'mail.fromx[0]')
 
-        self.assertRaises(AppToolError, lambda k: self.app_tool[k], 'mail.smtp[0]')
-        self.assertRaises(AppToolError, lambda k: self.app_tool.get(k), 'mail.smtp[0]')
+        self.assertRaises(AppToolError, lambda k: self.APP[k], 'mail.smtp[0]')
+        self.assertRaises(AppToolError, lambda k: self.APP.get(k), 'mail.smtp[0]')
 
-        self.assertRaises(AppToolError, lambda k: self.app_tool[k], 'mail.smtp.port.test')
-        self.assertIsNone(self.app_tool.get('mail.smtp.port.test'))
-        self.assertEqual(1, self.app_tool.get('mail.smtp.port.test', 1))
+        self.assertRaises(AppToolError, lambda k: self.APP[k], 'mail.smtp.port.test')
+        self.assertIsNone(self.APP.get('mail.smtp.port.test'))
+        self.assertEqual(1, self.APP.get('mail.smtp.port.test', 1))
         
-        self.assertEqual(CONFIG['demo.key']['from'][0], self.app_tool['demo#key.from[0]'])
+        self.assertEqual(CONFIG['demo.key2']['from'][0], self.APP['demo#key2.from[0]'])
+        self.assertRaises(AppToolError, lambda k: self.APP[k], 'demo#key.from[0]') # Because now demo.key is replaced by env
 
-        from os import environ as env
-        demo_value = 'DEMO_VALUE'
-        env['TEST_DEMO_KEY'] = demo_value # The first TEST is app_name
-        env['TEST_SMTP_HOST'] = demo_value
+        self.assertEqual(self.demo_value, self.APP['demo#key'])
+        self.assertEqual(self.demo_value, self.APP['demo.host'])
 
-        self.assertEqual(demo_value, self.app_tool['demo#key'])
-        self.assertEqual(demo_value, self.app_tool['smtp.host'])
 
-        env['TEST_DEMO_KEY_FROM_0'] = demo_value
-        self.assertEqual(demo_value, self.app_tool['demo#key.from[0]'])
-        env['TEST_DEMO_KEY_FROM_0_0'] = demo_value
-        self.assertEqual(demo_value, self.app_tool['demo#key.from[0][0]'])
+    def test_send_text_email(self):
+        """
+        docstring
+        """
+        result = send_email(
+            self.APP['mail.from'], 
+            self.APP['mail.to'], 
+            'Send text mail for chariothy_common',
+            'Send text mail for chariothy_common',
+            self.APP['smtp'],
+            send_to_file=self.APP['mail.dest']!='mail'
+        )
+        self.assertDictEqual(result, {})
+
+    def test_send_html_email(self):
+        """
+        docstring
+        """
+        body = """
+<h3>Hi，all</h3>
+<p>附件为本次自动化测试报告。</p>
+"""
+        result = send_email(
+            self.APP['mail.from'], 
+            self.APP['mail.to'], 
+            'Send html mail for chariothy_common',
+            smtp_config=self.APP['smtp'],
+            html_body=body,
+            send_to_file=self.APP['mail.dest']!='mail'
+        )
+        self.assertDictEqual(result, {})
+
+
+    def test_send_html_email_with_img(self):
+        """
+        docstring
+        """
+        body = """
+<h3>Hi，all</h3>
+<p>附件为本次自动化测试报告。</p>
+<p><img src="cid:{}"></p>
+<p><img src="cid:{}"></p>
+"""
+        pwd = os.path.dirname(__file__)
+        images = (
+            os.path.join(pwd, 'train.png'),
+            os.path.join(pwd, 'boat.png'),
+        )
+        result = send_email(
+            self.APP['mail.from'], 
+            self.APP['mail.to'], 
+            'Send html mail with image for chariothy_common',
+            smtp_config=self.APP['smtp'],
+            html_body=body,
+            image_paths=images,
+            send_to_file=self.APP['mail.dest']!='mail'
+        )
+        self.assertDictEqual(result, {})
+
+
+    def test_send_html_email_with_file(self):
+        """
+        docstring
+        """
+        body = """
+<h3>Hi，all</h3>
+<p>附件为本次自动化测试报告。</p>
+"""
+        pwd = os.path.dirname(__file__)
+        files = (
+            os.path.join(pwd, 'train.png'),
+            os.path.join(pwd, 'boat.png'),
+        )
+        result = send_email(
+            self.APP['mail.from'], 
+            self.APP['mail.to'], 
+            'Send html mail with file for chariothy_common',
+            smtp_config=self.APP['smtp'],
+            html_body=body,
+            file_paths=files,
+            send_to_file=self.APP['mail.dest']!='mail'
+        )
+        self.assertDictEqual(result, {})
+
 
 if __name__ == '__main__':
     unittest.main()

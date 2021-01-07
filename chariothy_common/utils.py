@@ -10,6 +10,7 @@ import time
 import random
 import json
 import re
+from typing import Union
 
 from .exception import AppToolError
 
@@ -67,9 +68,9 @@ def deep_merge_in(dict1: dict, dict2: dict) -> dict:
     Returns:
         dict -- Merged dictionary
     """
-    if type(dict1) == dict and type(dict2) == dict:
+    if type(dict1) is dict and type(dict2) is dict:
         for key in dict2.keys():
-            if key in dict1.keys() and type(dict1[key]) == dict and type(dict2[key]) == dict:
+            if key in dict1.keys() and type(dict1[key]) is dict and type(dict2[key]) is dict:
                 deep_merge_in(dict1[key], dict2[key])
             else:
                 dict1[key] = dict2[key]
@@ -86,10 +87,10 @@ def deep_merge(dict1: dict, dict2: dict) -> dict:
     Returns:
         dict -- Merged dictionary
     """
-    if type(dict1) == dict and type(dict2) == dict:
+    if type(dict1) is dict and type(dict2) is dict:
         dict1_copy = dict1.copy()
         for key in dict2.keys():
-            if key in dict1.keys() and type(dict1[key]) == dict and type(dict2[key]) == dict:
+            if key in dict1.keys() and type(dict1[key]) is dict and type(dict2[key]) is dict:
                 dict1_copy[key] = deep_merge(dict1[key], dict2[key])
             else:
                 dict1_copy[key] = dict2[key]
@@ -97,7 +98,11 @@ def deep_merge(dict1: dict, dict2: dict) -> dict:
     return dict1
 
 
-def send_email(from_addr, to_addrs, subject: str, body: str, smtp_config: dict, debug: bool=False) -> dict:
+def send_email(from_addr, to_addrs, subject: str, text_body: str='', smtp_config: dict={}, 
+    html_body: str=None, 
+    image_paths: Union[dict, tuple]=None, file_paths: Union[dict, tuple]=None, 
+    debug: bool=False, send_to_file: bool=False, email_file_dir=None
+    ) -> dict:
     """Helper for sending email
     
     Arguments:
@@ -106,7 +111,10 @@ def send_email(from_addr, to_addrs, subject: str, body: str, smtp_config: dict, 
         to_addrs {str|tuple} -- To address, can be email or list of emails or list of (name, email)
             Ex.: (('Henry TIAN', 'henrytian@163.com'),)
         subject {str} -- Email subject
-        body {str} -- Email body
+        text_body {str} -- Email text body
+        html_body {str} -- Email html body
+        image_paths {list|tuple} -- image file path array
+        file_paths {list|tuple} -- attachment file path array
         smtp_config {dict} -- SMTP config for SMTPHandler (default: {{}}), Ex.: 
         {
             'host': 'smtp.163.com',
@@ -115,16 +123,23 @@ def send_email(from_addr, to_addrs, subject: str, body: str, smtp_config: dict, 
             'pwd': '123456',
             'type': 'plain'         # plain (default) / ssl / tls
         }
-        debug {bool} -- If output debug info.
+        debug {bool} -- If True output debug info.
+        send_to_file {str} -- File path for writing email info to text file.
         
     Returns:
         dict -- Email sending errors. {} if success, else {receiver: message}.
     """
     assert(type(from_addr) in (str, tuple, list))
     assert(type(to_addrs) in (str, tuple, list))
-    assert(type(subject) == str)
-    assert(type(body) == str)
-    assert(type(smtp_config) == dict)
+    assert(type(subject) is str)
+    assert(type(text_body) is str or type(html_body) is str)
+    assert(type(smtp_config) is dict)
+
+    if send_to_file:
+        if not email_file_dir:
+            email_file_dir = os.path.join(os.getcwd(), 'logs')
+        if not os.path.exists(email_file_dir):
+            os.mkdir(email_file_dir)
 
     #TODO: Use schema to validate smtp_config
     
@@ -138,35 +153,101 @@ def send_email(from_addr, to_addrs, subject: str, body: str, smtp_config: dict, 
             #All (name, tuple)
             to_addrs = [formataddr(addr) for addr in to_addrs]
             to_addr_str = ','.join(to_addrs)
-        elif type(to_addrs[0]) == str:
+        elif type(to_addrs[0]) is str:
             #All emails
             to_addr_str = ','.join(to_addrs)
-    elif type(to_addrs) == str:
+    elif type(to_addrs) is str:
         to_addr_str = to_addrs
 
     from email.mime.text import MIMEText
-    msg = MIMEText(body, 'plain', 'utf-8')
+    from email.mime.image import MIMEImage
+    from email.mime.multipart import MIMEMultipart
+
+    msg = MIMEMultipart('mixed')
+    
     msg['From'] = from_addr
     msg['To'] = to_addr_str
     from email.header import Header
     msg['Subject'] = Header(subject, 'utf-8').encode()
-        
-    from smtplib import SMTP, SMTP_SSL
-    if smtp_config.get('type') == 'ssl':
-        server = SMTP_SSL(smtp_config['host'], smtp_config['port'])
-    elif smtp_config.get('type') == 'tls':
-        server = SMTP(smtp_config['host'], smtp_config['port'])
-        server.starttls()
-    else:
-        server = SMTP(smtp_config['host'], smtp_config['port'])
-    
-    server.ehlo()
-    if debug:
-        server.set_debuglevel(1)
-    server.login(smtp_config['user'], smtp_config['pwd'])
 
-    result = server.sendmail(from_addr, to_addrs, msg.as_string())
-    server.quit()
+    from email.message import EmailMessage
+    from email.utils import make_msgid
+    from mimetypes import guess_type
+
+    msg = EmailMessage()
+    # generic email headers
+    msg['From'] = from_addr
+    msg['To'] = to_addr_str
+    msg['Subject'] = Header(subject, 'utf-8').encode()
+
+    # set the plain text body
+    msg.set_content(text_body)
+
+    if html_body:
+        img_nodes = []
+        if image_paths and len(image_paths) > 0:
+            for image_path in image_paths:
+                # print(guess_type(image_path)[0].split('/', 1))
+                with open(image_path, 'rb') as fp:
+                    img_nodes.append({
+                        'cid': make_msgid('chariothy_common'),
+                        'bin': fp.read(),
+                        'type': guess_type(image_path)[0].split('/', 1)
+                    })
+            # note that we needed to peel the <> off the msgid for use in the html.
+            html_body = html_body.format(*[x['cid'][1:-1] for x in img_nodes])
+        msg.add_alternative(html_body, subtype='html')
+
+        for img_node in img_nodes:
+            maintype, subtype = img_node['type']
+            msg.get_payload()[1].add_related(
+                img_node['bin'],
+                maintype=maintype, 
+                subtype=subtype, 
+                cid=img_node['cid']
+            )
+
+    if file_paths and len(file_paths) > 0:
+        for file_path in file_paths:
+            ctype, encoding = guess_type(file_path)
+            if ctype is None or encoding is not None:
+                # No guess could be made, or the file is encoded (compressed), so
+                # use a generic bag-of-bits type.
+                ctype = 'application/octet-stream'
+            maintype, subtype = ctype.split('/', 1)
+            
+            with open(file_path, 'rb') as fp:
+                file_name = os.path.basename(file_path)
+                msg.add_attachment(fp.read(),
+                    maintype=maintype,
+                    subtype=subtype,
+                    filename=file_name
+                )
+    
+    if send_to_file:
+        email_file_name = now().replace(' ', '_').replace(':', '-') + '_' + str(random.randint(1000, 9999)) + '.txt'
+        from email.policy import SMTP
+        with open(os.path.join(email_file_dir, email_file_name), 'wb') as fp:
+            fp.write(msg.as_bytes(policy=SMTP))
+        result = {}
+    else:
+        from smtplib import SMTP, SMTP_SSL
+        if smtp_config.get('type') == 'ssl':
+            server = SMTP_SSL(smtp_config['host'], smtp_config['port'])
+        elif smtp_config.get('type') == 'tls':
+            server = SMTP(smtp_config['host'], smtp_config['port'])
+            server.starttls()
+        else:
+            server = SMTP(smtp_config['host'], smtp_config['port'])
+        
+        server.ehlo()
+        if debug:
+            server.set_debuglevel(1)
+        server.login(smtp_config['user'], smtp_config['pwd'])
+
+        #result = server.sendmail(from_addr, to_addrs, msg.as_string())
+        result = server.send_message(msg)
+        server.quit()
     return result
 
 

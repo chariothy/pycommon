@@ -5,6 +5,7 @@ from collections.abc import Iterable
 from logging import handlers
 import functools
 import time
+import re
 
 from .utils import deep_merge, send_email, get
 from .exception import AppToolError
@@ -23,7 +24,7 @@ class MySMTPHandler(handlers.SMTPHandler):
 
 
 class AppTool(object):
-    def __init__(self, app_name: str, app_path: str, local_config_dir: str='', config_name: str='config'):
+    def __init__(self, app_name: str, app_path: str, local_config_dir: str='', config_name: str='config', ignore_env:bool=False):
         self._app_name = app_name
         self._app_path = app_path
         self._config = {}
@@ -43,9 +44,34 @@ class AppTool(object):
         return self._logger
 
 
-    def load_config(self, local_config_dir: str = '', config_name: str='config') -> dict:
-        """Load config locally
-        
+    def _use_env_var(self, config: dict, parent_key: str) -> dict:
+        """Replace config variable with env
+
+        Args:
+            config (dict): config dict
+            parent_key (str, optional): parent key (connected by dot). Defaults to ''.
+
+        Returns:
+            dict: result
+        """
+        if type(config) is dict:
+            for key in config.keys():
+                full_key = (parent_key + '_' + re.sub(r'\W+', '_', key)).upper()
+                if full_key in os.environ.keys():
+                    config[key] = os.environ.get(full_key)
+                if type(config[key]) is dict:
+                    self._use_env_var(config[key], full_key)
+        return config
+
+
+    def load_config(self, local_config_dir: str = '', config_name: str='config', ignore_env:bool=False) -> dict:
+        """Load config locally then replace some with env value if NOT ignore_env
+        NOTE! 
+            - env key of config key will be UPPER of APP_NAME and KEY_NAMEs (connected by '_')
+            - ANY char which is NOT A-Za-z0-9_ , that's say \\w in re, will be replaced by '_'
+            Ex. a.b             -> APP_A
+                a.b[0][1].e'    -> APP_A_B_0_1_E
+
         Keyword Arguments:
             local_config_dir {str} -- Dir name of local config files. (default: {''})
         
@@ -75,6 +101,8 @@ class AppTool(object):
             except Exception:
                 pass
         
+        if not ignore_env:
+            self._use_env_var(self._config, self._app_name)
         return self._config
 
 
@@ -212,50 +240,6 @@ class AppTool(object):
 
 
     def get(self, key:str, default=None, check:bool=False, replacement_for_dot_in_key:str='#'):
-        """Get config value, keys are connected by dot, and use environment value if exists
-        Get config value, 
-            - if key exists in environment, use env value,
-            - if not, then if exists in config, use config item value,
-            - if not, then return default value.
-        Ex. _config = {
-                'a': {
-                    'b': 'c', 
-                    'd': [
-                        [{'e': 'f'}]
-                    ]
-                }
-            }
-            1. getx('a.b', 'e')
-            - if defined environment varible A_B = 'd', then return 'd',
-            - else see get(dictionary: dict, key:str, default=None, check:bool=False, replacement_for_dot_in_key:str=None)
-            
-            2. getx('a.b[0].e') , getx('a.b[-1].e')
-            - if defined environment varible A_B_0_0_E = 'd', then return 'd',
-            - else see get(dictionary: dict, key:str, default=None, check:bool=False, replacement_for_dot_in_key:str=None)
-
-        If you have to use item key with dot, you can use replacement_for_dot_in_key.
-        Ex. _config = {'a': {'b.c': 'd'}}
-            3. getx('a.b#c', replacement_for_dot_in_key='#')
-            - if defined environment varible A_B_C = 'd', then return 'd',
-            - else see get(dictionary: dict, key:str, default=None, check:bool=False, replacement_for_dot_in_key:str=None)
-
-
-        Args:
-            key (str): Key for config item which are coneected by dot.
-            default (any, optional): Default value if key does exist. Defaults to None.
-            replacement_for_dot_in_key (str, optional): To support keys like "a.b". If "#" is given, "a#b" can be recognized as "a.b" . Defaults to None.
-            check (bool, optional): If True, func will raise exception if key does not exist . Defaults to False.
-
-        Returns:
-            any: return config value
-        """
-        full_key = self._app_name + '_' + key.replace('.', '_').replace('[', '_').replace(']', '').replace(' ', '_')
-        if replacement_for_dot_in_key:
-            full_key = full_key.replace(replacement_for_dot_in_key, '_')
-        full_key = full_key.upper()
-        if full_key in os.environ.keys():
-            return os.environ.get(full_key)
-
         return get(self._config, key, default, check, replacement_for_dot_in_key)
 
 
