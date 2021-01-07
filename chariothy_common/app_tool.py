@@ -6,6 +6,7 @@ from logging import handlers
 import functools
 import time
 import re
+from typing import Union
 
 from .utils import deep_merge, send_email, get
 from .exception import AppToolError
@@ -163,7 +164,9 @@ class AppTool(object):
         return logger
 
 
-    def send_email(self, subject: str, body: str, to_addrs=None, debug: bool=False) -> dict:
+    def send_email(self, subject: str, text_body: str='', to_addrs=None, html_body: str=None, 
+        image_paths: Union[dict, tuple]=None, file_paths: Union[dict, tuple]=None, 
+        debug: bool=False, send_to_file: bool=False, email_file_dir=None) -> dict:
         """A shortcut of global send_email
         """
         smtp = self._config.get('smtp')
@@ -171,7 +174,16 @@ class AppTool(object):
         #TODO: Use schema to validate smtp_config
         assert(smtp and mail)
         mail_to = to_addrs if to_addrs else mail['to']
-        return send_email(mail['from'], mail_to, subject, body, smtp, debug)
+        return send_email(mail['from'], mail_to, subject, 
+            text_body=text_body, 
+            smtp_config=smtp, 
+            html_body=html_body,
+            image_paths=image_paths,
+            file_paths=file_paths,
+            debug=debug,
+            send_to_file=send_to_file,
+            email_file_dir=email_file_dir
+        )
 
 
     def debug(self, msg, *args, **kwargs):
