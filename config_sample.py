@@ -17,7 +17,7 @@ CONFIG = {
         'user': '15050506668@163.com',
         'pwd': '123456'
     },
-    'test.key': {
+    'demo.key': {
         'from': ('Hongyu TIAN', '15050506668@163.com'),
         'to': (('Hongyu TIAN', '6314849@qq.com'),)
     },

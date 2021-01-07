@@ -124,6 +124,8 @@ class CoreTestCase(unittest.TestCase):
         self.assertEqual(CONFIG['mail']['from'][0], self.app_tool.get('mail.from[0]'))
         self.assertEqual(CONFIG['mail']['from'][-1], self.app_tool['mail.from[-1]'])
 
+        self.assertEqual(CONFIG['mail']['to'][0][0], self.app_tool.get('mail.to[0][0]'))
+
         self.assertRaises(AppToolError, lambda k: self.app_tool[k], 'mail.from.test')
         self.assertIsNone(self.app_tool.get('mail.from.test'))
         self.assertEqual(1, self.app_tool.get('mail.from.test', 1))
@@ -144,7 +146,20 @@ class CoreTestCase(unittest.TestCase):
         self.assertIsNone(self.app_tool.get('mail.smtp.port.test'))
         self.assertEqual(1, self.app_tool.get('mail.smtp.port.test', 1))
         
-        self.assertEqual(CONFIG['test.key']['from'][0], self.app_tool['test#key.from[0]'])
+        self.assertEqual(CONFIG['demo.key']['from'][0], self.app_tool['demo#key.from[0]'])
+
+        from os import environ as env
+        demo_value = 'DEMO_VALUE'
+        env['TEST_DEMO_KEY'] = demo_value # The first TEST is app_name
+        env['TEST_SMTP_HOST'] = demo_value
+
+        self.assertEqual(demo_value, self.app_tool['demo#key'])
+        self.assertEqual(demo_value, self.app_tool['smtp.host'])
+
+        env['TEST_DEMO_KEY_FROM_0'] = demo_value
+        self.assertEqual(demo_value, self.app_tool['demo#key.from[0]'])
+        env['TEST_DEMO_KEY_FROM_0_0'] = demo_value
+        self.assertEqual(demo_value, self.app_tool['demo#key.from[0][0]'])
 
 if __name__ == '__main__':
     unittest.main()
