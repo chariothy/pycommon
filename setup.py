@@ -9,10 +9,11 @@ from setuptools import setup, Command
 NAME = 'chariothy-common'
 DESCRIPTION = 'Common code for myself.'
 PY_MODULES = ['chariothy_common']
+PACKAGES = ['chariothy_common']
 URL = 'https://github.com/chariothy/pycommon.git'
 EMAIL = 'chariothy@gmail.com'
 AUTHOR = 'Henry TIAN'
-VERSION = '1.1.0'
+VERSION = '1.1.1'
 
 LONG_DESCRIPTION = '''
 This is a helper which includes common methods and classes used by myself.
@@ -78,7 +79,7 @@ setup(
     url=URL,
     python_requires='>=3.6.0',
     # If your package is a single module, use this instead of 'packages':
-    py_modules=PY_MODULES,
+    packages=PACKAGES,
     install_requires=REQUIRED,
     include_package_data=True,
     license='MIT',
