@@ -159,17 +159,6 @@ def send_email(from_addr, to_addrs, subject: str, text_body: str='', smtp_config
     elif type(to_addrs) is str:
         to_addr_str = to_addrs
 
-    from email.mime.text import MIMEText
-    from email.mime.image import MIMEImage
-    from email.mime.multipart import MIMEMultipart
-
-    msg = MIMEMultipart('mixed')
-    
-    msg['From'] = from_addr
-    msg['To'] = to_addr_str
-    from email.header import Header
-    msg['Subject'] = Header(subject, 'utf-8').encode()
-
     from email.message import EmailMessage
     from email.utils import make_msgid
     from mimetypes import guess_type
@@ -178,7 +167,7 @@ def send_email(from_addr, to_addrs, subject: str, text_body: str='', smtp_config
     # generic email headers
     msg['From'] = from_addr
     msg['To'] = to_addr_str
-    msg['Subject'] = Header(subject, 'utf-8').encode()
+    msg['Subject'] = subject
 
     # set the plain text body
     msg.set_content(text_body)
@@ -224,13 +213,14 @@ def send_email(from_addr, to_addrs, subject: str, text_body: str='', smtp_config
                     filename=file_name
                 )
     
-    if send_to_file:
+    if send_to_file or debug:
         email_file_name = now().replace(' ', '_').replace(':', '-') + '_' + str(random.randint(1000, 9999)) + '.txt'
         from email.policy import SMTP
         with open(os.path.join(email_file_dir, email_file_name), 'wb') as fp:
             fp.write(msg.as_bytes(policy=SMTP))
         result = {}
-    else:
+        
+    if not send_to_file:
         from smtplib import SMTP, SMTP_SSL
         if smtp_config.get('type') == 'ssl':
             server = SMTP_SSL(smtp_config['host'], smtp_config['port'])
