@@ -4,7 +4,8 @@ from chariothy_common import deep_merge, deep_merge_in, benchmark, is_win, is_li
 from chariothy_common import random_sleep, dump_json, load_json, send_email, get
 from chariothy_common import AppTool, AppToolError
 
-from config_test import CONFIG
+from config import CONFIG
+from config_local import CONFIG as CONFIG_LOCAL
 
 
 dict1 = {
@@ -41,14 +42,17 @@ class CoreTestCase(unittest.TestCase):
     def setUp(self):
         from os import environ as env
         self.demo_value = 'DEMO_VALUE'
-        env['TEST_DEMO_KEY'] = self.demo_value # The first TEST is app_name
-        env['TEST_DEMO_HOST'] = self.demo_value
-        env['TEST_DEMO_KEY_FROM_0'] = self.demo_value
-        env['TEST_DEMO_KEY_FROM_0_0'] = self.demo_value
+        env['TESTING_DEMO_KEY'] = self.demo_value # The first TESTING is app_name
+        env['TESTING_DEMO_HOST'] = self.demo_value
+        env['TESTING_DEMO_KEY_FROM_0'] = self.demo_value
+        env['TESTING_DEMO_KEY_FROM_0_0'] = self.demo_value
         
-        self.APP_NAME = 'test'
-        self.APP = AppTool(self.APP_NAME, os.getcwd(), config_name='config_test')
+        self._write_email_to_file = env.get('MAIL_DEST') != 'mail'
+
+        self.APP_NAME = 'testing'
+        self.APP = AppTool(self.APP_NAME, os.getcwd())
         #print(self.APP.config)
+        #print(env)
 
     def test_app_tool(self):
         logger = self.APP.init_logger()
@@ -102,10 +106,8 @@ class CoreTestCase(unittest.TestCase):
         """
         docstring
         """
-        self.assertDictEqual(CONFIG, self.APP.config)
-
-        self.assertTupleEqual(CONFIG['mail']['from'], self.APP.get('mail.from'))
-        self.assertTupleEqual(CONFIG['mail']['from'], self.APP['mail.from'])
+        self.assertListEqual(CONFIG['mail']['from'], self.APP.get('mail.from'))
+        self.assertListEqual(CONFIG['mail']['from'], self.APP['mail.from'])
 
         self.assertEqual(CONFIG['mail']['from'][0], self.APP.get('mail.from[0]'))
         self.assertEqual(CONFIG['mail']['from'][-1], self.APP['mail.from[-1]'])
@@ -138,6 +140,7 @@ class CoreTestCase(unittest.TestCase):
         self.assertEqual(self.demo_value, self.APP['demo#key'])
         self.assertEqual(self.demo_value, self.APP['demo.host'])
 
+        self.assertEqual(CONFIG_LOCAL['log']['level'], self.APP['log.level'])
 
     def test_send_text_email(self):
         """
@@ -149,7 +152,7 @@ class CoreTestCase(unittest.TestCase):
             'Send text mail for chariothy_common',
             'Send text mail for chariothy_common',
             self.APP['smtp'],
-            send_to_file=self.APP['mail.dest']!='mail'
+            send_to_file=self._write_email_to_file
         )
         self.assertDictEqual(result, {})
 
@@ -167,7 +170,7 @@ class CoreTestCase(unittest.TestCase):
             'Send html mail for chariothy_common',
             smtp_config=self.APP['smtp'],
             html_body=body,
-            send_to_file=self.APP['mail.dest']!='mail'
+            send_to_file=self._write_email_to_file
         )
         self.assertDictEqual(result, {})
 
@@ -194,7 +197,7 @@ class CoreTestCase(unittest.TestCase):
             smtp_config=self.APP['smtp'],
             html_body=body,
             image_paths=images,
-            send_to_file=self.APP['mail.dest']!='mail'
+            send_to_file=self._write_email_to_file
         )
         self.assertDictEqual(result, {})
 
@@ -219,7 +222,7 @@ class CoreTestCase(unittest.TestCase):
             smtp_config=self.APP['smtp'],
             html_body=body,
             file_paths=files,
-            send_to_file=self.APP['mail.dest']!='mail'
+            send_to_file=self._write_email_to_file
         )
         self.assertDictEqual(result, {})
 

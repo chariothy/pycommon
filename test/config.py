@@ -5,28 +5,27 @@ CONFIG = {
                             #   INFO    - Enable file, mail         （如果在dest中启用）
                             #   ERROR   - Enable mail               （如果在dest中启用）
         'dest': ['stdout', 'file', 'mail'],  # 分别设置日志对象，优先级高于level设置
-        'receiver': (('Hongyu TIAN', '6314849@qq.com'),) # 日志邮件接收者，如果为空，则使用mail.to设置
+        'receiver': [['Henry TIAN', 'chariothy@gmail.com']] # 日志邮件接收者，如果为空，则使用mail.to设置
     },
     'mail': {
-        'dest': 'file',   # 邮件实际不发送，而是写入文件
-        'from': ('Hongyu TIAN', '15050506668@163.com'),
-        'to': (('Hongyu TIAN', '6314849@qq.com'),)
+        'from': ['Henry TIAN', 'chariothy@gmail.com'],
+        'to': [['Henry TIAN', 'chariothy@gmail.com']]
     },
     'smtp': {
-        'host': 'smtp.163.com',
+        'host': 'smtp.gmail.com',
         'port': 25,
-        'user': '15050506668@163.com',
+        'user': 'chariothy@gmail.com',
         'pwd': '123456'
     },
     'demo': {
-        'host': 'smtp.163.com',
+        'host': 'smtp.gmail.com',
     },
     'demo.key': {
-        'from': ('Hongyu TIAN', '15050506668@163.com'),
-        'to': (('Hongyu TIAN', '6314849@qq.com'),)
+        'from': ['Henry TIAN', 'chariothy@gmail.com'],
+        'to': [['Henry TIAN', 'chariothy@gmail.com']]
     },
     'demo.key2': {
-        'from': ('Hongyu TIAN', '15050506668@163.com'),
-        'to': (('Hongyu TIAN', '6314849@qq.com'),)
+        'from': ['Henry TIAN', 'chariothy@gmail.com'],
+        'to': [['Henry TIAN', 'chariothy@gmail.com']]
     },
 }

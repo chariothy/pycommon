@@ -55,17 +55,27 @@ class AppTool(object):
         Returns:
             dict: result
         """
+        if type(config) is tuple:
+            config = list(config)
+
         if type(config) is dict:
             for key in config.keys():
                 full_key = (parent_key + '_' + re.sub(r'\W+', '_', key)).upper()
                 if full_key in os.environ.keys():
                     config[key] = os.environ.get(full_key)
-                if type(config[key]) is dict:
-                    self._use_env_var(config[key], full_key)
+                elif type(config[key]) in (list, dict, tuple):
+                    config[key] = self._use_env_var(config[key], full_key)
+        elif type(config) is list:
+            for index, _ in enumerate(config):
+                full_key = (parent_key + '_' + str(index)).upper()
+                if full_key in os.environ.keys():
+                    config[index] = os.environ.get(full_key)
+                elif type(config[index]) in (list, dict, tuple):
+                    config[index] = self._use_env_var(config[index], full_key)
         return config
 
 
-    def load_config(self, local_config_dir: str = '', config_name: str='config', ignore_env:bool=False) -> dict:
+    def load_config(self, local_config_dir: str = '', config_name: str='config', read_env:bool=True) -> dict:
         """Load config locally then replace some with env value if NOT ignore_env
         NOTE! 
             - env key of config key will be UPPER of APP_NAME and KEY_NAMEs (connected by '_')
@@ -95,14 +105,15 @@ class AppTool(object):
         except Exception:
             pass
         
-        if '--test' in sys.argv:
+        env = os.environ.get(self._app_name.upper() + '_ENV')
+        if env:
             try:
-                config_test = __import__(config_name + '_test').CONFIG
+                config_test = __import__(config_name + f'_{env}').CONFIG
                 self._config = deep_merge(self._config, config_test)
             except Exception:
                 pass
         
-        if not ignore_env:
+        if read_env:
             self._use_env_var(self._config, self._app_name)
         return self._config
 

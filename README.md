@@ -28,3 +28,7 @@
 
 - GetCh class
     - input value for multiple platforms
+
+## TODO:
+
+- send_email support CC.
