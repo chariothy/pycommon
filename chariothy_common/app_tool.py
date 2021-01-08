@@ -147,15 +147,40 @@ class AppTool(object):
             logger.addHandler(rf_handler)
 
         if smtp and 'mail' in logDest:
-            from_addr = mail.get('from', (smtp['user'], smtp['user']))
+            from_addr = mail.get('from', formataddr((smtp['user'], smtp['user'])))
             #TODO: Use schema to validate smtp
-            assert(type(from_addr) in (tuple, list) and len(from_addr) == 2)
-            from_addr = formataddr(from_addr)
+            assert type(from_addr) in (str, tuple, list)
+            if type(from_addr) in (tuple, list):
+                assert len(from_addr) == 2
+                # @deprecated 字符串形式更方便docker用环境变量
+                # Ex. from_addr == ['Henry TIAN', 'chariothy@gmail.com']
+                from_addr = formataddr(from_addr)
+            # else: 
+            # Ex. from_addr == 'Henry TIAN <chariothy@gmail.com>'
 
             to_addrs = logConfig.get('receiver', mail.get('to'))
-            assert(len(to_addrs) > 0 and type(to_addrs[0]) in (tuple, list))
-            #All (name, tuple)
-            to_addrs = (formataddr(addr) for addr in to_addrs)
+            assert type(to_addrs) in (str, tuple, list)
+            if type(to_addrs) in (tuple, list):
+                assert(len(to_addrs) > 0)
+                if type(to_addrs[0]) in (tuple, list):
+                    #All (name, tuple)
+                    # @deprecated 字符串形式更方便docker用环境变量
+                    # Ex. [
+                    #       ['Henry TIAN', 'chariothy@gmail.com'],
+                    #       ['Henry TIAN', '6314849@qq.com']
+                    #     ]
+                    to_addrs = (formataddr(addr) for addr in to_addrs)
+                    to_addrs = ','.join(to_addrs)
+                elif type(to_addrs[0]) is str:
+                    #All emails
+                    # @deprecated 字符串形式更方便docker用环境变量
+                    # Ex. [
+                    #       'Henry TIAN <chariothy@gmail.com>',
+                    #       'Henry TIAN <6314849@qq.com>'
+                    #     ]
+                    to_addrs = ','.join(to_addrs)
+            # else: 
+            # Ex. to_addrs == 'Henry TIAN <chariothy@gmail.com>,Henry TIAN <6314849@qq.com>'
 
             mail_handler = MySMTPHandler(
                     mailhost = (smtp['host'], smtp['port']),

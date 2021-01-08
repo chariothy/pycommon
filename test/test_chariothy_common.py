@@ -106,14 +106,11 @@ class CoreTestCase(unittest.TestCase):
         """
         docstring
         """
-        self.assertListEqual(CONFIG['mail']['from'], self.APP.get('mail.from'))
-        self.assertListEqual(CONFIG['mail']['from'], self.APP['mail.from'])
+        self.assertEqual(CONFIG['mail']['from'], self.APP.get('mail.from'))
+        self.assertEqual(CONFIG['mail']['from'], self.APP['mail.from'])
 
-        self.assertEqual(CONFIG['mail']['from'][0], self.APP.get('mail.from[0]'))
-        self.assertEqual(CONFIG['mail']['from'][-1], self.APP['mail.from[-1]'])
-
-        self.assertEqual(CONFIG['mail']['to'][0][0], self.APP.get('mail.to[0][0]'))
-
+        
+        
         self.assertRaises(AppToolError, lambda k: self.APP[k], 'mail.from.test')
         self.assertIsNone(self.APP.get('mail.from.test'))
         self.assertEqual(1, self.APP.get('mail.from.test', 1))

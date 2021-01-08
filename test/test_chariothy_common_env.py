@@ -12,10 +12,11 @@ class CoreTestCase(unittest.TestCase):
     def setUp(self):
         from os import environ as env
         env['TESTING_ENV'] = 'dev' # The first TESTING is app_name
+        del env['TESTING_MAIL_FROM'], env['TESTING_MAIL_TO']
         
         self.APP_NAME = 'testing'
         self.APP = AppTool(self.APP_NAME, os.getcwd())
-        print(self.APP.config)
+        #print(self.APP.config)
         #print(env)
 
     
@@ -23,6 +24,11 @@ class CoreTestCase(unittest.TestCase):
         """
         docstring
         """
+        self.assertEqual(CONFIG_DEV['mail']['from'][0], self.APP.get('mail.from[0]'))
+        self.assertEqual(CONFIG_DEV['mail']['from'][-1], self.APP['mail.from[-1]'])
+
+        self.assertEqual(CONFIG_DEV['mail']['to'][0][0], self.APP.get('mail.to[0][0]'))
+
         self.assertEqual(CONFIG_DEV['log']['level'], self.APP['log.level'])
         self.assertEqual(CONFIG_DEV['log']['dest'][0], self.APP['log.dest[0]'])
 

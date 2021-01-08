@@ -107,9 +107,12 @@ def send_email(from_addr, to_addrs, subject: str, text_body: str='', smtp_config
     
     Arguments:
         from_addr {str|tuple} -- From address, can be email or (name, email).
-            Ex.: ('Henry TIAN', 'henrytian@163.com')
+            Ex. : ('Henry TIAN', 'henrytian@163.com')
+                : 'Henry TIAN <henrytian@163.com>'
         to_addrs {str|tuple} -- To address, can be email or list of emails or list of (name, email)
-            Ex.: (('Henry TIAN', 'henrytian@163.com'),)
+            Ex. : (('Henry TIAN', 'henrytian@163.com'), ('Henry TIAN', 'chariothy@gmail.com'),)
+                : 'Henry TIAN <henrytian@163.com>,Henry TIAN <chariothy@gmail.com>'
+                : ('Henry TIAN <henrytian@163.com>', 'Henry TIAN <chariothy@gmail.com>')
         subject {str} -- Email subject
         text_body {str} -- Email text body
         html_body {str} -- Email html body
@@ -145,19 +148,33 @@ def send_email(from_addr, to_addrs, subject: str, text_body: str='', smtp_config
     
     if type(from_addr) in (tuple, list):
         assert(len(from_addr) == 2)
+        # @deprecated 字符串形式更方便docker用环境变量
+        # Ex. from_addr == ['Henry TIAN', 'chariothy@gmail.com']
         from_addr = formataddr(from_addr)
+    # else: 
+    # Ex. from_addr == 'Henry TIAN <chariothy@gmail.com>'
 
     if type(to_addrs) in (tuple, list):
         assert(len(to_addrs) > 0)
         if type(to_addrs[0]) in (tuple, list):
             #All (name, tuple)
+            # @deprecated 字符串形式更方便docker用环境变量
+            # Ex. [
+            #       ['Henry TIAN', 'chariothy@gmail.com'],
+            #       ['Henry TIAN', '6314849@qq.com']
+            #     ]
             to_addrs = (formataddr(addr) for addr in to_addrs)
-            to_addr_str = ','.join(to_addrs)
+            to_addrs = ','.join(to_addrs)
         elif type(to_addrs[0]) is str:
             #All emails
-            to_addr_str = ','.join(to_addrs)
-    elif type(to_addrs) is str:
-        to_addr_str = to_addrs
+            # @deprecated 字符串形式更方便docker用环境变量
+            # Ex. [
+            #       'Henry TIAN <chariothy@gmail.com>',
+            #       'Henry TIAN <6314849@qq.com>'
+            #     ]
+            to_addrs = ','.join(to_addrs)
+    # else: 
+    # Ex. to_addrs == 'Henry TIAN <chariothy@gmail.com>,Henry TIAN <6314849@qq.com>'
 
     from email.message import EmailMessage
     from email.utils import make_msgid
@@ -166,7 +183,7 @@ def send_email(from_addr, to_addrs, subject: str, text_body: str='', smtp_config
     msg = EmailMessage()
     # generic email headers
     msg['From'] = from_addr
-    msg['To'] = to_addr_str
+    msg['To'] = to_addrs
     msg['Subject'] = subject
 
     # set the plain text body
