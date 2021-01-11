@@ -105,7 +105,8 @@ class AppTool(object):
         except Exception:
             pass
         
-        env = os.environ.get(self._app_name.upper() + '_ENV')
+        env_key = re.sub(r'\W+', '_', self._app_name.upper())
+        env = os.environ.get(env_key + '_ENV')
         if env:
             try:
                 config_test = __import__(config_name + f'_{env}').CONFIG

@@ -11,10 +11,10 @@ from config_dev import CONFIG as CONFIG_DEV
 class CoreTestCase(unittest.TestCase):
     def setUp(self):
         from os import environ as env
-        env['TESTING_ENV'] = 'dev' # The first TESTING is app_name
+        env['TEST_ING_ENV'] = 'dev' # The first TESTING is app_name
         del env['TESTING_MAIL_FROM'], env['TESTING_MAIL_TO']
         
-        self.APP_NAME = 'testing'
+        self.APP_NAME = 'test-ing'
         self.APP = AppTool(self.APP_NAME, os.getcwd())
         #print(self.APP.config)
         #print(env)
